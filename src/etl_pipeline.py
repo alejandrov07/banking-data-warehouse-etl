@@ -57,56 +57,66 @@ def procesar_clientes():
     df_core = pd.read_csv('data/raw/clientes_core.csv', encoding='utf-8')
     df_tar = pd.read_csv('data/raw/clientes_tarjetas.csv', encoding='utf-8')
 
-    # Limpieza: quitar espacios en nombres
-    df_core['NombreCompleto'] = df_core['NombreCompleto'].str.strip()
-    df_tar['NombreCompleto'] = df_tar['NombreCompleto'].str.strip()
-
-    # Limpieza de cédula: eliminar guiones y espacios (dejamos solo dígitos)
+    # Limpiar cédulas: solo dígitos y rellenar a 11 dígitos
     def limpiar_cedula(val):
         if pd.isna(val):
             return None
-        return ''.join(filter(str.isdigit, str(val)))
+        # Eliminar todo excepto dígitos
+        limpio = ''.join(filter(str.isdigit, str(val)))
+        # Rellenar con ceros a la izquierda para tener 11 dígitos
+        return limpio.zfill(11) if limpio else None
 
+    print("--- Limpiando cédulas ---")
     df_core['Cedula'] = df_core['Cedula'].apply(limpiar_cedula)
     df_tar['Cedula'] = df_tar['Cedula'].apply(limpiar_cedula)
 
-    # Estandarizar mayúsculas en nombre
-    df_core['NombreCompleto'] = df_core['NombreCompleto'].str.title()
-    df_tar['NombreCompleto'] = df_tar['NombreCompleto'].str.title()
-
-    # Añadir columna FuenteOrigen
+    # Añadir fuente
     df_core['FuenteOrigen'] = 'Core'
     df_tar['FuenteOrigen'] = 'Tarjetas'
 
-    # Unificar ambas fuentes
-    df_clientes = pd.concat([df_core, df_tar], ignore_index=True)
+    print(f"Core antes de deduplicar: {len(df_core)}")
+    print(f"Tarjetas antes de deduplicar: {len(df_tar)}")
 
-    # Deduplicación: si la misma cédula aparece en ambas, nos quedamos con la primera (Core tiene prioridad)
-    # Ordenamos para que Core aparezca primero (Core tiene prioridad sobre Tarjetas)
-    df_clientes = df_clientes.sort_values(['Cedula', 'FuenteOrigen'], ascending=[True, True])
-    df_clientes = df_clientes.drop_duplicates(subset=['Cedula'], keep='first')
+    # ---- DEDUPLICACIÓN EXPLÍCITA ----
+    # Separar Core y Tarjetas con cédula no nula
+    df_core_con_cedula = df_core[df_core['Cedula'].notna()]
+    df_tar_con_cedula = df_tar[df_tar['Cedula'].notna()]
 
-    # Limpiar columnas que no existen en algunas filas (rellenar con None)
+    # Cédulas de Core
+    cedulas_core_set = set(df_core_con_cedula['Cedula'].unique())
+    print(f"Cédulas de Core: {len(cedulas_core_set)}")
+
+    # Filtrar Tarjetas que NO están en Core (las únicas que se agregan)
+    df_tar_nuevos = df_tar_con_cedula[~df_tar_con_cedula['Cedula'].isin(cedulas_core_set)]
+    print(f"Tarjetas con cédula nueva (no duplicada): {len(df_tar_nuevos)}")
+
+    # Tarjetas sin cédula (se agregan todas porque no pueden duplicar)
+    df_tar_sin_cedula = df_tar[df_tar['Cedula'].isna()]
+    print(f"Tarjetas sin cédula: {len(df_tar_sin_cedula)}")
+
+    # Concatenar: Core + Tarjetas nuevas + Tarjetas sin cédula
+    df_final = pd.concat([df_core, df_tar_nuevos, df_tar_sin_cedula], ignore_index=True)
+
+    print(f"Total de clientes final: {len(df_final)}")
+
+    # Rellenar columnas faltantes
     for col in ['FechaNacimiento', 'Genero', 'Email', 'Telefono', 'Ciudad', 'EsActivo']:
-        if col not in df_clientes.columns:
-            df_clientes[col] = None
+        if col not in df_final.columns:
+            df_final[col] = None
 
-    # Asegurar que EsActivo sea entero
-    df_clientes['EsActivo'] = df_clientes['EsActivo'].fillna(1).astype(int)
+    df_final['EsActivo'] = df_final['EsActivo'].fillna(1).astype(int)
 
-    # Seleccionar solo las columnas que existen en la tabla DIM_Cliente
+    # Seleccionar columnas destino
     columnas_destino = ['ClienteID_Source', 'FuenteOrigen', 'Cedula', 'NombreCompleto',
                         'FechaNacimiento', 'Genero', 'Email', 'Telefono', 'Ciudad', 'EsActivo']
-    df_clientes = df_clientes[columnas_destino]
+    df_final = df_final[columnas_destino]
+    df_final = df_final.dropna(subset=['ClienteID_Source'])
 
-    # Eliminar registros donde ClienteID_Source sea nulo (por seguridad)
-    df_clientes = df_clientes.dropna(subset=['ClienteID_Source'])
-
-    # Limpiar la tabla antes de insertar
+    # Limpiar tabla y cargar
     ejecutar_sql("DELETE FROM DIM_Cliente")
-    df_clientes.to_sql('DIM_Cliente', engine, if_exists='append', index=False)
-    print(f"DIM_Cliente cargada con {len(df_clientes)} registros.")
-    return df_clientes
+    df_final.to_sql('DIM_Cliente', engine, if_exists='append', index=False)
+    print(f"DIM_Cliente cargada con {len(df_final)} registros.")
+    return df_final
 
 # ============================================
 # 3. PROCESAR DIM_Producto
