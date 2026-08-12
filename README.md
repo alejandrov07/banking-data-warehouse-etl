@@ -86,7 +86,7 @@ El gráfico de pastel y la tarjeta resumen la proporción de transacciones limpi
 ## Contacto
 
 **Alejandro Velázquez**  
-[LinkedIn](https://linkedin.com/in/alejandro-velazquez) · [GitHub](https://github.com/alejandrov07)
+[LinkedIn](https://www.linkedin.com/in/alejandro-velazquez-9b0375387/) · [GitHub](https://github.com/alejandrov07)
 
 ---
 
