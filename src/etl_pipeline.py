@@ -57,20 +57,16 @@ def procesar_clientes():
     df_core = pd.read_csv('data/raw/clientes_core.csv', encoding='utf-8')
     df_tar = pd.read_csv('data/raw/clientes_tarjetas.csv', encoding='utf-8')
 
-    # Limpiar cédulas: solo dígitos y rellenar a 11 dígitos
     def limpiar_cedula(val):
         if pd.isna(val):
             return None
-        # Eliminar todo excepto dígitos
         limpio = ''.join(filter(str.isdigit, str(val)))
-        # Rellenar con ceros a la izquierda para tener 11 dígitos
         return limpio.zfill(11) if limpio else None
 
     print("--- Limpiando cédulas ---")
     df_core['Cedula'] = df_core['Cedula'].apply(limpiar_cedula)
     df_tar['Cedula'] = df_tar['Cedula'].apply(limpiar_cedula)
 
-    # Añadir fuente
     df_core['FuenteOrigen'] = 'Core'
     df_tar['FuenteOrigen'] = 'Tarjetas'
 
