@@ -1,93 +1,77 @@
-# Banking Data Warehouse & ETL Pipeline
+# Banking Data Warehouse & Security Layer
 
-> **ESTADO: COMPLETADO**  
-> *Proyecto finalizado. Incluye diseño arquitectónico, pipeline ETL funcional y dashboards en Power BI.*
-
----
-
-## Descripción del Proyecto
-
-Diseño e implementación de un Data Warehouse para un entorno bancario simulado, aplicando principios de **arquitectura de datos**, **gobernabilidad** y **gestión de proyectos**. 
-
-El proyecto simula la integración de dos sistemas bancarios hipotéticos (Core Bancario y Sistema de Tarjetas) para construir una visión unificada de transacciones y clientes, resolviendo problemas típicos de calidad de datos, duplicidad y falta de estándares.
+> **Status: Core DWH Complete | Security Layer Implemented (RLS, DDM, Audit)**  
+> *A fully functional Data Warehouse for a simulated banking environment, extended with enterprise-grade security controls.*
 
 ---
 
-## Objetivo Profesional
+## Project Overview
 
-Este repositorio forma parte de mi portafolio técnico y tiene como propósito demostrar mis competencias para el rol de **Líder de Proyectos de Arquitectura de Datos**:
+This project simulates the integration of two hypothetical banking systems (Core Banking and Card System) to build a unified view of transactions and customers. It solves real-world data quality issues like duplicates, missing standards, and inconsistent formats.
 
-- Modelado dimensional (Star Schema) para Data Warehousing.
-- Implementación de pipelines ETL/ELT con Python y SQL Server.
-- Aplicación de controles de calidad e integridad de datos.
-- Documentación de metadatos y linaje de datos.
-- Visualización estratégica con herramientas de BI (Power BI).
-- Gestión de proyectos y gobierno de datos.
+**What makes this project unique:**  
+Beyond the standard ETL pipeline and Star Schema modeling, I implemented a **production-ready security layer** using SQL Server native features:
 
----
-
-## Stack Tecnológico
-
-| Componente       | Tecnología                        |
-| :--------------- | :-------------------------------- |
-| **Extracción**   | Python (Pandas)                   |
-| **Base de Datos**| SQL Server                        |
-| **Modelado**     | Star Schema (Hechos y Dimensiones)|
-| **BI / Dashboards** | Power BI Desktop              |
-| **Control de Versiones** | Git / GitHub               |
+- **Row-Level Security (RLS):** Restricts analysts to only view transactions from their assigned branches.
+- **Dynamic Data Masking (DDM):** Automatically obfuscates PII (Cedula, Email, Phone) for non-privileged users.
+- **Native Server Auditing:** Tracks every `SELECT`, `INSERT`, `UPDATE`, and `DELETE` on sensitive tables, providing a forensic audit trail.
 
 ---
 
-## Dashboards en Power BI
+## Professional Objective
 
-Los datos del Data Warehouse se visualizan en un dashboard interactivo construido con Power BI Desktop. El modelo conecta las tablas `DIM` y `FACT` en un esquema estrella, permitiendo análisis de ventas, clientes y calidad de datos.
+This repository is part of my technical portfolio, demonstrating my competencies for **Data Engineering**, **Analytics Engineering**, and **Database Administration** roles:
 
-### 1. Ventas por Mes (Tendencia Temporal)
-Esta tabla muestra la evolución de los montos de transacciones organizados por mes, permitiendo identificar patrones estacionales.
-
-![Tendencia de Ventas](docs/assets/dashboard_tendencia.png)
-
-### 2. Top Clientes por Consumo
-La tabla resume los clientes con mayor volumen de transacciones, sumando el total de montos por cliente.
-
-![Clientes Top](docs/assets/dashboard_clientes.png)
-
-### 3. Calidad de Datos
-El gráfico de pastel y la tarjeta resumen la proporción de transacciones limpias (`FlagCalidad = 1`) frente a aquellas con errores (`FlagCalidad = 0`). El 90.48% de los datos superaron los controles de calidad.
-
-![Calidad de Datos](docs/assets/dashboard_calidad.png)
+- Dimensional modeling (Star Schema) for Data Warehousing.
+- ETL/ELT pipeline development with Python (Pandas) and SQL Server.
+- Implementation of database security controls (RLS, DDM, Auditing).
+- Metadata management and data lineage documentation.
+- Strategic data visualization with Power BI.
 
 ---
 
-## Estado del Proyecto
+## Tech Stack
 
-| Fase | Estado |
-| :--- | :--- |
-| Diseño del Star Schema | ✅ Completado |
-| Diccionario de Metadatos | ✅ Completado |
-| Documentación de Linaje | ✅ Completado |
-| Script de creación de tablas (SQL) | ✅ Completado |
-| Pipeline ETL (Python) | ✅ Completado |
-| Dashboards en Power BI | ✅ Completado |
-
----
-
-## Cómo ejecutar el proyecto
-
-1. Clona el repositorio.
-2. Ejecuta `sql/create_tables.sql` en SQL Server para crear las tablas.
-3. Instala las dependencias: `pip install pandas sqlalchemy pyodbc`.
-4. Genera los datos: `python src/generar_datos.py`.
-5. Ejecuta el ETL: `python src/etl_pipeline.py`.
-6. Abre `dashboards/banking_dashboard.pbix` en Power BI Desktop.
+| Component               | Technology                                          |
+| :---------------------- | :-------------------------------------------------- |
+| **Extraction & Load**   | Python (Pandas, SQLAlchemy)                         |
+| **Database**            | SQL Server (Developer Edition)                      |
+| **Modeling**            | Star Schema (Dimensions & Fact)                     |
+| **Security Layer**      | Row-Level Security, Dynamic Data Masking, Auditing  |
+| **BI / Dashboards**     | Power BI Desktop                                    |
+| **Version Control**     | Git / GitHub                                        |
 
 ---
 
-## Contacto
+## Key Features
 
-**Alejandro Velázquez**  
-[LinkedIn](https://www.linkedin.com/in/alejandro-velazquez-9b0375387/) · [GitHub](https://github.com/alejandrov07)
+### 1. Dimensional Modeling (Star Schema)
+Designed a classic Star Schema with 4 dimensions (`DIM_Cliente`, `DIM_Producto`, `DIM_Tiempo`, `DIM_Sucursal`) and 1 fact table (`FACT_Transaccion`) to enable fast analytical queries.
+
+### 2. Automated ETL Pipeline
+Built a Python ETL pipeline using Pandas that:
+- Generates synthetic banking data.
+- Cleans and standardizes formats.
+- Deduplicates client records.
+- Loads transformed data into SQL Server.
+
+### 3. Enterprise Security Layer (NEW)
+- **Row-Level Security (RLS):** A dynamic filtering policy ensures analysts see *only* their branch data. Admins and auditors are exempt.
+- **Dynamic Data Masking (DDM):** Sensitive columns (`Cedula`, `Email`, `Phone`) are partially masked for analysts, while auditors and admins see full data.
+- **Audit Trail:** SQL Server's native auditing captures all access to `FACT_Transaccion` and `DIM_Cliente`, with a stored procedure to consolidate logs into a queryable table.
+
+### 4. Power BI Dashboards
+Interactive dashboards connected to the DWH, displaying:
+- Monthly sales trends.
+- Top clients by transaction volume.
+- Data quality metrics (clean vs. flagged transactions).
+
+![Dashboard Preview](docs/assets/dashboard_tendencia.png)
 
 ---
 
-*Proyecto desarrollado como parte de mi preparación para el rol de Líder de Proyectos de Arquitectura de Datos.*
+## How to Run This Project
+
+1. **Clone the repository**  
+   ```bash
+   git clone https://github.com/alejandrov07/banking-data-warehouse-etl.git
