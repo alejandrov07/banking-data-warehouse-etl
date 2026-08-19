@@ -1,5 +1,3 @@
--- USER-BRANCH MAPPING TABLE
-
 USE BankingDWH;
 GO
 

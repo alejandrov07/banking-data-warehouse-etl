@@ -1,146 +1,68 @@
--- ============================================
--- SCRIPT: CREACIÓN DE ESQUEMA ESTRELLA (STAR SCHEMA)
--- PROYECTO: Banking Data Warehouse
--- BASE DE DATOS: SQL Server
--- ============================================
+USE BankingDWH;
+GO
 
-
--- ============================================
---  TABLAS DE DIMENSIÓN (DIM)
--- ============================================
-
--- DIMENSIÓN CLIENTE
-CREATE TABLE DIM_Cliente (
-    ClienteKey INT IDENTITY(1,1) PRIMARY KEY, -- Clave sustituta (Surrogate Key)
-    ClienteID_Source VARCHAR(50) NOT NULL, -- ID del sistema fuente
-    FuenteOrigen VARCHAR(20) NOT NULL, -- 'Core' o 'Tarjetas'
-    Cedula VARCHAR(20) NULL, -- Identificador único de negocio (Golden Key)
-    NombreCompleto VARCHAR(100) NULL,
-    FechaNacimiento DATE NULL,
-    Genero CHAR(1) NULL, -- 'M', 'F'
-    Email VARCHAR(100) NULL,
-    Telefono VARCHAR(20) NULL,
-    FechaRegistro DATE NULL,
-    Pais VARCHAR(50) NULL,
-    Ciudad VARCHAR(50) NULL,
-    EsActivo BIT DEFAULT 1,
-    -- Metadatos de auditoría
-    FechaCarga DATETIME DEFAULT GETDATE(),
-    FechaActualizacion DATETIME DEFAULT GETDATE()
+CREATE TABLE dbo.DIM_Customer (
+    CustomerKey INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerID NVARCHAR(20) NOT NULL,
+    FullName NVARCHAR(100) NOT NULL,
+    Cedula NVARCHAR(20) NOT NULL,
+    Email NVARCHAR(100) NOT NULL,
+    Phone NVARCHAR(20) NOT NULL,
+    City NVARCHAR(50) NOT NULL,
+    RegistrationDate DATE NOT NULL
 );
+GO
 
--- DIMENSIÓN PRODUCTO
-CREATE TABLE DIM_Producto (
-    ProductoKey INT IDENTITY(1,1) PRIMARY KEY,
-    ProductoID_Source VARCHAR(50) NOT NULL,
-    FuenteOrigen VARCHAR(20) NOT NULL, -- 'Core' o 'Tarjetas'
-    CodigoProducto VARCHAR(20) NULL, -- Código interno del banco
-    NombreProducto VARCHAR(100) NULL,
-    Categoria VARCHAR(50) NULL, -- 'Ahorro', 'Credito', 'Tarjeta', etc.
-    SubCategoria VARCHAR(50) NULL,
-    TasaInteres DECIMAL(5,2) NULL,
-    Moneda VARCHAR(10) DEFAULT 'DOP',
-    EsActivo BIT DEFAULT 1,
-    FechaCarga DATETIME DEFAULT GETDATE(),
-    FechaActualizacion DATETIME DEFAULT GETDATE()
+CREATE TABLE dbo.DIM_Product (
+    ProductKey INT IDENTITY(1,1) PRIMARY KEY,
+    ProductCode NVARCHAR(20) NOT NULL,
+    ProductName NVARCHAR(100) NOT NULL,
+    Category NVARCHAR(50) NOT NULL,
+    UnitPrice DECIMAL(10,2) NOT NULL
 );
+GO
 
--- DIMENSIÓN TIEMPO (Calendario)
-CREATE TABLE DIM_Tiempo (
-    TiempoKey INT IDENTITY(1,1) PRIMARY KEY,
-    Fecha DATE NOT NULL,
-    Anio INT NOT NULL,
-    Trimestre INT NOT NULL,
-    Mes INT NOT NULL,
-    MesNombre VARCHAR(20) NOT NULL,
-    Semana INT NOT NULL,
-    DiaSemana INT NOT NULL, -- 1 = Domingo, 7 = Sábado
-    DiaSemanaNombre VARCHAR(15) NOT NULL,
-    EsFinDeSemana BIT DEFAULT 0,
-    EsDiaFestivo BIT DEFAULT 0
+CREATE TABLE dbo.DIM_Date (
+    DateKey INT PRIMARY KEY,
+    FullDate DATE NOT NULL,
+    Year INT NOT NULL,
+    Quarter INT NOT NULL,
+    Month INT NOT NULL,
+    MonthName NVARCHAR(20) NOT NULL,
+    DayOfWeek INT NOT NULL,
+    DayName NVARCHAR(20) NOT NULL,
+    IsWeekend BIT NOT NULL
 );
+GO
 
--- DIMENSIÓN SUCURSAL
-CREATE TABLE DIM_Sucursal (
-    SucursalKey INT IDENTITY(1,1) PRIMARY KEY,
-    SucursalID_Source VARCHAR(20) NOT NULL,
-    NombreSucursal VARCHAR(100) NOT NULL,
-    Ciudad VARCHAR(50) NULL,
-    Region VARCHAR(50) NULL,
-    EsActiva BIT DEFAULT 1,
-    FechaCarga DATETIME DEFAULT GETDATE()
+CREATE TABLE dbo.DIM_Branch (
+    BranchKey INT IDENTITY(1,1) PRIMARY KEY,
+    BranchCode NVARCHAR(10) NOT NULL,
+    BranchName NVARCHAR(100) NOT NULL,
+    City NVARCHAR(50) NOT NULL,
+    Region NVARCHAR(50) NOT NULL
 );
+GO
 
--- ============================================
--- TABLA DE HECHOS (FACT) - TRANSACCIONES
--- ============================================
-
-CREATE TABLE FACT_Transaccion (
-    TransaccionKey INT IDENTITY(1,1) PRIMARY KEY,
-    
-    -- Claves foráneas hacia dimensiones
-    ClienteKey INT NOT NULL,
-    ProductoKey INT NOT NULL,
-    TiempoKey INT NOT NULL,
-    SucursalKey INT NULL,
-    
-    -- Métricas (Hechos)
-    Monto DECIMAL(18,2) NULL, -- Permite NULL (productos medidos por cantidad)
-    MontoUSD DECIMAL(18,2) NULL, -- Conversión para análisis global
-    Cantidad INT NULL, -- Para transacciones por unidades
-    
-    -- Atributos de la transacción
-    TransaccionID_Source VARCHAR(50) NOT NULL, -- ID único del sistema fuente
-    FuenteOrigen VARCHAR(20) NOT NULL, -- 'Core' o 'Tarjetas'
-    TipoTransaccion VARCHAR(30) NULL, -- 'Deposito', 'Retiro', 'Pago', 'Consumo'
-    Canal VARCHAR(30) NULL, -- 'ATM', 'Sucursal', 'App', 'Web'
-    Estatus VARCHAR(20) DEFAULT 'Completada', -- 'Completada', 'Rechazada', 'Pendiente'
-    
-    -- Metadatos de auditoría y calidad
-    FechaCarga DATETIME DEFAULT GETDATE(),
-    FechaActualizacion DATETIME DEFAULT GETDATE(),
-    FlagCalidad BIT DEFAULT 1, -- 1 = Datos limpios, 0 = Datos sospechosos
-    ObservacionCalidad VARCHAR(255) NULL, -- Detalle de errores de calidad
+CREATE TABLE dbo.FACT_Transaction (
+    TransactionKey INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerKey INT NOT NULL,
+    ProductKey INT NOT NULL,
+    DateKey INT NOT NULL,
+    BranchKey INT NOT NULL,
+    Amount DECIMAL(15,2) NOT NULL,
+    Quantity INT NOT NULL,
+    TransactionType NVARCHAR(20) NOT NULL,
+    FlagQuality BIT NOT NULL DEFAULT 1
 );
+GO
 
--- ============================================
--- RESTRICCIONES DE INTEGRIDAD REFERENCIAL
--- ============================================
-
-ALTER TABLE FACT_Transaccion ADD CONSTRAINT FK_FACT_Cliente 
-    FOREIGN KEY (ClienteKey) REFERENCES DIM_Cliente(ClienteKey);
-
-ALTER TABLE FACT_Transaccion ADD CONSTRAINT FK_FACT_Producto 
-    FOREIGN KEY (ProductoKey) REFERENCES DIM_Producto(ProductoKey);
-
-ALTER TABLE FACT_Transaccion ADD CONSTRAINT FK_FACT_Tiempo 
-    FOREIGN KEY (TiempoKey) REFERENCES DIM_Tiempo(TiempoKey);
-
-ALTER TABLE FACT_Transaccion ADD CONSTRAINT FK_FACT_Sucursal 
-    FOREIGN KEY (SucursalKey) REFERENCES DIM_Sucursal(SucursalKey);
-
--- ============================================
--- ÍNDICES PARA OPTIMIZACIÓN DE CONSULTAS
--- ============================================
-
-CREATE INDEX IDX_FACT_ClienteKey ON FACT_Transaccion(ClienteKey);
-CREATE INDEX IDX_FACT_ProductoKey ON FACT_Transaccion(ProductoKey);
-CREATE INDEX IDX_FACT_TiempoKey ON FACT_Transaccion(TiempoKey);
-CREATE INDEX IDX_FACT_FuenteOrigen ON FACT_Transaccion(FuenteOrigen);
-CREATE INDEX IDX_FACT_Estatus ON FACT_Transaccion(Estatus);
-
--- ============================================
--- COMENTARIOS DE METADATOS
--- ============================================
-
-EXEC sp_addextendedproperty 
-    @name = N'Descripcion', 
-    @value = N'Dimensión que contiene la información maestra de clientes unificada de múltiples fuentes.',
-    @level0type = N'SCHEMA', @level0name = N'dbo',
-    @level1type = N'TABLE',  @level1name = N'DIM_Cliente';
-
-EXEC sp_addextendedproperty 
-    @name = N'Descripcion', 
-    @value = N'Tabla de hechos que almacena las transacciones financieras consolidadas del banco.',
-    @level0type = N'SCHEMA', @level0name = N'dbo',
-    @level1type = N'TABLE',  @level1name = N'FACT_Transaccion';
+ALTER TABLE dbo.FACT_Transaction ADD CONSTRAINT FK_FACT_Customer
+    FOREIGN KEY (CustomerKey) REFERENCES dbo.DIM_Customer(CustomerKey);
+ALTER TABLE dbo.FACT_Transaction ADD CONSTRAINT FK_FACT_Product
+    FOREIGN KEY (ProductKey) REFERENCES dbo.DIM_Product(ProductKey);
+ALTER TABLE dbo.FACT_Transaction ADD CONSTRAINT FK_FACT_Date
+    FOREIGN KEY (DateKey) REFERENCES dbo.DIM_Date(DateKey);
+ALTER TABLE dbo.FACT_Transaction ADD CONSTRAINT FK_FACT_Branch
+    FOREIGN KEY (BranchKey) REFERENCES dbo.DIM_Branch(BranchKey);
+GO

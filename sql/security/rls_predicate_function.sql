@@ -3,7 +3,9 @@
 -- This inline table-valued function determines which rows a user can see in FACT_Transaccion. It is the "brain" of Row-Level Security.
 
 -- Logic:
--- If the current user is 'AuditCompliance' or 'DWHAdmin', return 1 (no filter) so they see everything.   
+-- If the current user is 'AuditCompliance', 'DWHAdmin', or 'ETLService', return 1 (no filter) so they see everything.
+-- ETLService is exempt because the ETL pipeline loads and deletes rows across all branches; without this
+-- exemption, RLS silently hides rows from the service account during load/cleanup, breaking the ETL.
 -- Otherwise, join to Security.UserBranch to get the BranchKeys assigned to that user, and return only those keys.
 
 -- Performance:
@@ -30,7 +32,7 @@ RETURN
     SELECT 1 AS can_see
     WHERE 
         -- Exceptions: Auditor and Admin see everything
-        @usuario IN ('AuditCompliance', 'DWHAdmin')
+        @usuario IN ('AuditCompliance', 'DWHAdmin', 'ETLService')
         OR
         -- For analysts: check the mapping table
         EXISTS (
