@@ -1,118 +1,102 @@
-# Linaje de Datos (Data Lineage) - Cadena de Valor
+# Data Lineage - Value Chain
 
-## Propósito de este Documento
+## Purpose of This Document
 
-Este documento describe el flujo completo de los datos desde su origen hasta su consumo final. Su objetivo es proporcionar transparencia, facilitar la auditoría y permitir que cualquier miembro del equipo (desarrollador, analista, auditor) pueda rastrear un dato hasta su fuente original.
-
-El linaje responde a tres preguntas fundamentales:
-- ¿De dónde vienen los datos? (Sistemas origen)
-- ¿Qué les pasa en el camino? (Transformaciones y reglas de calidad)
-- ¿Dónde terminan y cómo se usan? (Data Warehouse y Dashboards)
+This document describes the complete flow of data from its origin to its final consumption, so any team member can trace a piece of data back to how it was produced.
 
 ---
 
-## Flujo de Alto Nivel (Diagrama Conceptual)
-
-El siguiente diagrama muestra el recorrido general de los datos a través de las cuatro capas del sistema.
+## High-Level Flow (Conceptual Diagram)
 
 ```mermaid
 flowchart TD
-    subgraph Origen["CAPA 1: SISTEMAS ORIGEN"]
-        Core["Fuente 1: Core Bancario<br>(clientes_core.csv, transacciones_core.csv)"]
-        Tarjetas["Fuente 2: Sistema de Tarjetas<br>(clientes_tarjetas.csv, transacciones_tarjetas.csv)"]
+    subgraph Gen["LAYER 1: SYNTHETIC DATA GENERATION"]
+        Script["generate_data.py<br>(Python / pandas, seeded random)"]
+        CSVs["CSV files in data/raw/:<br>customers.csv, products.csv,<br>dates.csv, branches.csv,<br>transactions.csv"]
     end
 
-    subgraph ETL["CAPA 2: ETL (PYTHON)"]
-        Extraer["Extracción: Lectura de CSVs"]
-        Transformar["Transformación:<br>Limpieza, Deduplicación,<br>Claves sustitutas, Reglas de calidad"]
-        Cargar["Carga: Inserción en tablas DWH"]
+    subgraph ETL["LAYER 2: ETL (PYTHON)"]
+        Load["etl_pipeline.py:<br>Read each CSV, load as-is<br>into its corresponding table"]
     end
 
-    subgraph DWH["CAPA 3: DATA WAREHOUSE (STAR SCHEMA)"]
-        Dims["Dimensiones: DIM_Cliente, DIM_Producto, DIM_Tiempo, DIM_Sucursal"]
-        Hechos["Hechos: FACT_Transaccion"]
+    subgraph DWH["LAYER 3: DATA WAREHOUSE (STAR SCHEMA)"]
+        Dims["Dimensions: DIM_Customer, DIM_Product, DIM_Date, DIM_Branch"]
+        Fact["Fact: FACT_Transaction"]
     end
 
-    subgraph BI["CAPA 4: CONSUMO (BI)"]
-        Dashboard["Dashboards en Power BI<br>Ventas por mes, Top clientes, Calidad de datos"]
+    subgraph BI["LAYER 4: CONSUMPTION (BI)"]
+        Dashboard["Power BI Dashboards"]
     end
 
-    Core --> Extraer
-    Tarjetas --> Extraer
-    Extraer --> Transformar
-    Transformar --> Cargar
-    Cargar --> Dims
-    Cargar --> Hechos
-    Dims --> Hechos
-    Hechos --> Dashboard
+    Script --> CSVs
+    CSVs --> Load
+    Load --> Dims
+    Load --> Fact
+    Dims --> Fact
+    Fact --> Dashboard
 ```
 
 ---
 
-## Flujo Detallado por Tabla
+## Detailed Flow by Table
 
-### 1. DIM_Cliente (Dimensión Cliente)
+### 1. DIM_Customer
 
-| Origen | Transformación Aplicada | Destino | Observaciones |
+| Source | Transformation Applied | Destination | Notes |
 | :--- | :--- | :--- | :--- |
-| Core Bancario (clientes_core.csv) | Lectura del archivo CSV. Estandarización de nombres (eliminar espacios múltiples, capitalizar). Formateo de cédula (eliminar guiones). Asignación de ClienteKey (clave sustituta generada automáticamente). Unificación con Tarjetas usando la Cédula como Golden Key. | DIM_Cliente | Si la cédula existe en ambas fuentes, se considera el mismo cliente y se unifica en un solo registro con ClienteKey único. |
-| Sistema de Tarjetas (clientes_tarjetas.csv) | Lectura del archivo CSV. Estandarización de nombres. Formateo de cédula. Asignación de ClienteKey (clave sustituta generada automáticamente). Unificación con Core usando la Cédula como Golden Key. | DIM_Cliente | Si la cédula no existe en Core, se crea un nuevo cliente con FuenteOrigen = 'Tarjetas'. |
+| `generate_data.py::generate_customers()` → `customers.csv` | None. `CustomerKey` is assigned directly by the generator (not by SQL IDENTITY at load time — the ETL runs `SET IDENTITY_INSERT ON` and loads the pre-assigned key). | DIM_Customer | This is synthetic data, not a real integration from a source banking system. |
 
-### 2. DIM_Producto (Dimensión Producto)
+### 2. DIM_Product
 
-| Origen | Transformación Aplicada | Destino | Observaciones |
+| Source | Transformation Applied | Destination | Notes |
 | :--- | :--- | :--- | :--- |
-| Core Bancario (productos_core.csv) | Lectura del archivo CSV. Asignación de ProductoKey (clave sustituta). Estandarización del nombre del producto. Unificación de códigos: CodigoProducto recibe el código oficial del banco. | DIM_Producto | ProductoID_Source guarda el ID original de cada fuente. |
-| Sistema de Tarjetas (productos_tarjetas.csv) | Lectura del archivo CSV. Asignación de ProductoKey. Estandarización del nombre del producto. Unificación de códigos. | DIM_Producto | Si el mismo producto existe en ambas fuentes, se unifica en un solo registro. |
+| `generate_data.py::generate_products()` → `products.csv` | None. A fixed catalog of 10 hardcoded products with pre-assigned `ProductKey` values. | DIM_Product | Loaded with `IDENTITY_INSERT ON`, same as DIM_Customer. |
 
-### 3. DIM_Tiempo (Dimensión Tiempo)
+### 3. DIM_Date
 
-| Origen | Transformación Aplicada | Destino | Observaciones |
+| Source | Transformation Applied | Destination | Notes |
 | :--- | :--- | :--- | :--- |
-| Generado internamente | Se genera un rango de fechas (ej. desde 2020-01-01 hasta 2030-12-31). Para cada fecha se extraen: Año, Trimestre, Mes, MesNombre, Semana, DiaSemana, DiaSemanaNombre, EsFinDeSemana. TiempoKey es generado automáticamente. | DIM_Tiempo | No proviene de sistemas fuente. Es una tabla maestra creada por el arquitecto de datos. |
+| `generate_data.py::generate_dates()` → `dates.csv` | A full calendar is generated for 2024-01-01 through 2024-12-31 using `pandas.date_range`, with `DateKey`, `Year`, `Quarter`, `Month`, etc. derived directly from each date. | DIM_Date | `DateKey` is not an IDENTITY column in SQL Server — it's the YYYYMMDD integer computed in Python and inserted directly. |
 
-### 4. DIM_Sucursal (Dimensión Sucursal)
+### 4. DIM_Branch
 
-| Origen | Transformación Aplicada | Destino | Observaciones |
+| Source | Transformation Applied | Destination | Notes |
 | :--- | :--- | :--- | :--- |
-| Core Bancario (sucursales_core.csv) | Lectura del archivo CSV. Asignación de SucursalKey (clave sustituta). | DIM_Sucursal | El Sistema de Tarjetas no tiene información de sucursales, por eso solo proviene de Core. |
+| `generate_data.py::generate_branches()` → `branches.csv` | None. A fixed list of 5 hardcoded branches with pre-assigned `BranchKey` values. | DIM_Branch | Loaded with `IDENTITY_INSERT ON`, same as DIM_Customer. |
 
-### 5. FACT_Transaccion (Tabla de Hechos)
+### 5. FACT_Transaction
 
-| Origen | Transformación Aplicada | Destino | Observaciones |
+| Source | Transformation Applied | Destination | Notes |
 | :--- | :--- | :--- | :--- |
-| Core Bancario (transacciones_core.csv) | Lectura del archivo CSV. Conversión de claves: el archivo trae ClienteID_Source y ProductoID_Source. Se buscan en DIM_Cliente y DIM_Producto para obtener ClienteKey y ProductoKey. Asignación de TiempoKey: la fecha de la transacción se busca en DIM_Tiempo. Validación de calidad: si Monto y Cantidad están ambos nulos, se marca FlagCalidad = 0 y se escribe el error en ObservacionCalidad. Conversión de moneda: si el monto está en DOP, se convierte a USD y se guarda en MontoUSD. Carga final: se inserta en FACT_Transaccion. | FACT_Transaccion | TransaccionID_Source guarda el ID original de la transacción. FuenteOrigen = 'Core'. |
-| Sistema de Tarjetas (transacciones_tarjetas.csv) | Lectura del archivo CSV. Conversión de claves: similar al Core. Asignación de TiempoKey: similar al Core. Validación de calidad: similar al Core. Conversión de moneda: similar al Core. Carga final: se inserta en FACT_Transaccion. | FACT_Transaccion | TransaccionID_Source guarda el ID original de la transacción. FuenteOrigen = 'Tarjetas'. |
+| `generate_data.py::generate_transactions()` → `transactions.csv` | For each of 63 synthetic transactions, a customer, product, date, and branch are picked at random and referenced by their surrogate keys directly (no lookup/mapping step is needed, since the keys already match). `FlagQuality` is set randomly (~90% pass, ~10% flagged) rather than derived from a validation rule. `etl_pipeline.py` inserts each row individually via a parameterized `INSERT`. | FACT_Transaction | Unlike a real-world ETL, there is no key-mapping step here because the generator already produces foreign keys that match the dimension tables. |
 
 ---
 
-## Flujo de Calidad de Datos (Reglas Aplicadas)
+## Known Limitations of This Lineage
 
-La calidad se verifica en la capa de Transformación (Python). Cada regla genera un resultado:
+This is a portfolio/learning project, not a production integration. In particular:
 
-| Regla ID | Descripción | Afecta a | Columna de Destino | Acción si se Incumple |
-| :--- | :--- | :--- | :--- | :--- |
-| R001 | Al menos una métrica (Monto o Cantidad) debe tener valor | FACT_Transaccion | Monto, Cantidad | FlagCalidad = 0, ObservacionCalidad = 'Transaccion sin monto ni cantidad' |
-| R002 | Monto no puede ser negativo | FACT_Transaccion | Monto | FlagCalidad = 0, ObservacionCalidad = 'Monto negativo detectado' |
-| R003 | Cedula debe tener formato de 11 dígitos si no es nula | DIM_Cliente | Cedula | FlagCalidad = 0, ObservacionCalidad = 'Formato de cedula invalido' |
-| R004 | Producto debe tener categoría válida (no nula y dentro de lista) | DIM_Producto | Categoria | FlagCalidad = 0, ObservacionCalidad = 'Categoria de producto no valida' |
+- There is no real source system. All data is synthetically generated by a single Python script (`generate_data.py`), not extracted from two separate hypothetical systems.
+- `FlagQuality` is randomly assigned at generation time, not computed from a business rule during the ETL transform step.
+- There is no currency conversion, deduplication, or customer-matching logic in the current pipeline — each dimension is loaded independently and transactions reference pre-assigned keys.
+- Re-running `etl_pipeline.py` without first clearing the 5 tables (`FACT_Transaction` first, then the 4 dimensions) will fail with a primary key violation, since `IDENTITY_INSERT` re-inserts the same fixed keys every run.
 
 ---
 
-## Resumen de la Cadena de Valor (Value Chain)
+## Value Chain Summary
 
-| Capa | Componente | Entrada | Salida |
+| Layer | Component | Input | Output |
 | :--- | :--- | :--- | :--- |
-| 1. Origen | Core Bancario (CSV) | Datos transaccionales del sistema Core | Archivos CSV: clientes_core.csv, transacciones_core.csv |
-| 1. Origen | Sistema de Tarjetas (CSV) | Datos transaccionales del sistema Tarjetas | Archivos CSV: clientes_tarjetas.csv, transacciones_tarjetas.csv |
-| 2. Transformación | Python ETL Script | Archivos CSV | Datos transformados listos para insertar en tablas DWH |
-| 3. Almacenamiento | Data Warehouse (SQL Server) | Datos transformados | Tablas: DIM_Cliente, DIM_Producto, DIM_Tiempo, DIM_Sucursal, FACT_Transaccion |
-| 4. Consumo | Power BI Dashboards | Consultas SQL a las tablas del DWH | Reportes visuales: Ventas, Clientes, Productos, Calidad de Datos |
+| 1. Generation | `generate_data.py` | Hardcoded seed data + `random`/`numpy` (seeded) | CSV files in `data/raw/` |
+| 2. Load | `etl_pipeline.py` | CSV files | Rows inserted into DIM_Customer, DIM_Product, DIM_Date, DIM_Branch, FACT_Transaction |
+| 3. Storage | Data Warehouse (SQL Server) | Loaded rows | Star schema with Row-Level Security applied on FACT_Transaction |
+| 4. Consumption | Power BI Dashboards | SQL queries against the DWH tables | Visual reports |
 
 ---
 
-## Historial de Versiones
+## Version History
 
-| Versión | Fecha | Autor | Cambios |
+| Version | Date | Author | Changes |
 | :--- | :--- | :--- | :--- |
-| 1.0 | Agosto 2026 | Alejandro Velazquez | Creación inicial del documento. |
+| 1.0 | August 2026 | Alejandro Velazquez | Initial document creation (Spanish, described a hypothetical two-source-system integration that was never implemented). |
+| 2.0 | August 2026 | Alejandro Velazquez | Translated to English and rewritten to match the actual implemented pipeline (`generate_data.py` + `etl_pipeline.py`). |

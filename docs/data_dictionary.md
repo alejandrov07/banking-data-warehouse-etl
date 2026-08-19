@@ -1,172 +1,137 @@
-# Diccionario de Datos - Banking Data Warehouse
+# Data Dictionary - Banking Data Warehouse
 
-## Proposito del Documento
+## Purpose of This Document
 
-Este documento describe todas las tablas y columnas que componen el Data Warehouse del proyecto bancario simuado. Su objetivo es servir como guia de referencia para analistas de negocio, desarrolladores y equipos de gobernabilidad, permitiendo entender el significado de cada dato, su origen y las reglas que lo rigen.
+This document describes all the tables and columns that make up the Data Warehouse for the simulated banking project. Its goal is to serve as a reference guide for business analysts, developers, and governance teams, so they can understand the meaning of each field and the rules that govern it.
 
-El diccionario esta organizado por tablas, siguiendo el modelo Star Schema. Las tablas de dimension (DIM) contienen informacion descriptiva y las tablas de hechos (FACT) contienen metricas numericas.
+The dictionary is organized by table, following the Star Schema model. Dimension tables (DIM) contain descriptive information and the fact table (FACT) contains numeric metrics.
 
 ---
 
-## Convenciones de Nomenclatura
+## Naming Conventions
 
-Para mantener la claridad y consistencia en todo el modelo, se aplican las siguientes convenciones:
+**Prefixes (indicate table type)**
 
-**Prefijos (indican el tipo de tabla)**
-
-| Prefijo | Significado |
+| Prefix | Meaning |
 | :--- | :--- |
-| DIM_ | Tabla de Dimensión. Contiene atributos descriptivos para filtrar y agrupar. |
-| FACT_ | Tabla de Hechos. Contiene métricas numéricas y claves foráneas que conectan con las dimensiones. |
+| DIM_ | Dimension table. Contains descriptive attributes for filtering and grouping. |
+| FACT_ | Fact table. Contains numeric metrics and foreign keys connecting to the dimensions. |
 
-**Sufijos (indican el tipo de columna)**
+**Suffixes (indicate column type)**
 
-| Sufijo | Significado |
+| Suffix | Meaning |
 | :--- | :--- |
-| Key | Indica que la columna es una clave primaria (PK) o foránea (FK). Ejemplo: ClienteKey, ProductoKey. |
-| Source | Indica que la columna contiene el identificador original del sistema fuente. Ejemplo: ClienteID_Source. |
+| Key | Indicates the column is a primary key (PK) or foreign key (FK). Example: CustomerKey, ProductKey. |
 
 ---
 
-## Tabla: DIM_Cliente
+## Table: DIM_Customer
 
-**Descripcion general:** Tabla maestra de clientes. Consolida informacion de las fuentes Core Bancario y Sistema de Tarjetas. Cada registro representa un cliente unico dentro del Data Warehouse, identificado por una clave sustituta (ClienteKey).
+**General description:** Master customer table. Each record represents a unique customer within the Data Warehouse, identified by a surrogate key (CustomerKey).
 
-**Volumen estimado:** 10,000 - 50,000 registros.
+**Estimated volume:** 20 records in the current synthetic dataset; designed to scale to thousands.
 
-| Nombre Columna | Tipo Dato | PK/FK | Descripcion de Negocio | Origen | Reglas de Calidad |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| ClienteKey | INT | PK | Identificador unico generado automaticamente para cada cliente dentro del Data Warehouse. No tiene significado en el negocio. Sirve como clave sustituta para conectar con la tabla de hechos. | Generado por el sistema (IDENTITY) | No nulo. Unico. |
-| ClienteID_Source | VARCHAR(50) | - | Identificador original del cliente en el sistema fuente. Permite rastrear el registro hasta su origen. | Core Bancario o Sistema de Tarjetas | No nulo. |
-| FuenteOrigen | VARCHAR(20) | - | Nombre del sistema del cual proviene el registro. Valores posibles: 'Core' o 'Tarjetas'. | Sistema origen | No nulo. |
-| Cedula | VARCHAR(20) | - | Numero de cedula del cliente. Es la clave de negocio utilizada para unificar un mismo cliente entre diferentes fuentes. | Core Bancario o Sistema de Tarjetas | Puede ser nulo si la fuente no la proporciona. Si existe, debe tener el formato de cedula dominicana. |
-| NombreCompleto | VARCHAR(100) | - | Nombre y apellidos completos del cliente. | Core Bancario o Sistema de Tarjetas | Puede ser nulo. |
-| FechaNacimiento | DATE | - | Fecha de nacimiento del cliente. | Core Bancario | Puede ser nulo. |
-| Genero | CHAR(1) | - | Genero del cliente. Valores posibles: 'M' (Masculino), 'F' (Femenino). | Core Bancario | Puede ser nulo. |
-| Email | VARCHAR(100) | - | Correo electronico del cliente. | Core Bancario o Sistema de Tarjetas | Puede ser nulo. Debe tener formato de email valido si existe. |
-| Telefono | VARCHAR(20) | - | Numero de telefono del cliente. | Core Bancario | Puede ser nulo. |
-| FechaRegistro | DATE | - | Fecha en que el cliente se registro en el banco. | Core Bancario | Puede ser nulo. |
-| Pais | VARCHAR(50) | - | Pais de residencia del cliente. | Core Bancario | Puede ser nulo. |
-| Ciudad | VARCHAR(50) | - | Ciudad de residencia del cliente. | Core Bancario | Puede ser nulo. |
-| EsActivo | BIT | - | Indicador de cliente activo. Valor 1 = Activo, 0 = Inactivo. | Core Bancario | No nulo. Valor por defecto: 1. |
-| FechaCarga | DATETIME | - | Marca de tiempo de cuando el registro fue insertado por primera vez en el Data Warehouse. | Generado por el sistema (GETDATE) | No nulo. |
-| FechaActualizacion | DATETIME | - | Marca de tiempo de la ultima actualizacion del registro en el Data Warehouse. | Generado por el sistema (GETDATE) | No nulo. |
+| Column Name | Data Type | PK/FK | Business Description | Quality Rules |
+| :--- | :--- | :--- | :--- | :--- |
+| CustomerKey | INT (IDENTITY) | PK | Unique identifier automatically generated for each customer within the Data Warehouse. Has no business meaning. | Not null. Unique. |
+| CustomerID | NVARCHAR(20) | - | Business-facing customer code (e.g. 'C0001'). | Not null. |
+| FullName | NVARCHAR(100) | - | Customer's full name. | Not null. |
+| Cedula | NVARCHAR(20) | - | Customer's national ID number. | Not null. |
+| Email | NVARCHAR(100) | - | Customer's email address. | Not null. |
+| Phone | NVARCHAR(20) | - | Customer's phone number. | Not null. |
+| City | NVARCHAR(50) | - | Customer's city of residence. | Not null. |
+| RegistrationDate | DATE | - | Date the customer record was created. | Not null. |
 
 ---
 
-## Tabla: DIM_Producto
+## Table: DIM_Product
 
-**Descripcion general:** Tabla maestra de productos financieros. Contiene la informacion de todos los productos que ofrece el banco, como cuentas de ahorro, tarjetas de credito, prestamos, etc.
+**General description:** Master table of financial products offered by the bank (accounts, cards, loans, investments, insurance).
 
-**Volumen estimado:** 100 - 500 registros.
+**Estimated volume:** 10 records in the current synthetic dataset.
 
-| Nombre Columna | Tipo Dato | PK/FK | Descripcion de Negocio | Origen | Reglas de Calidad |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| ProductoKey | INT | PK | Identificador unico generado automaticamente para cada producto dentro del Data Warehouse. Clave sustituta para conectar con la tabla de hechos. | Generado por el sistema (IDENTITY) | No nulo. Unico. |
-| ProductoID_Source | VARCHAR(50) | - | Identificador original del producto en el sistema fuente. | Core Bancario o Sistema de Tarjetas | No nulo. |
-| FuenteOrigen | VARCHAR(20) | - | Nombre del sistema del cual proviene el registro. Valores posibles: 'Core' o 'Tarjetas'. | Sistema origen | No nulo. |
-| CodigoProducto | VARCHAR(20) | - | Codigo interno del producto asignado por el banco. | Core Bancario o Sistema de Tarjetas | Puede ser nulo. |
-| NombreProducto | VARCHAR(100) | - | Nombre comercial del producto (ej. 'Cuenta Ahorro Premium', 'Visa Platinum'). | Core Bancario o Sistema de Tarjetas | Puede ser nulo. |
-| Categoria | VARCHAR(50) | - | Categoria general del producto. Ejemplos: 'Ahorro', 'Credito', 'Tarjeta', 'Inversion'. | Core Bancario | Puede ser nulo. |
-| SubCategoria | VARCHAR(50) | - | Subcategoria dentro de la categoria principal. Ejemplo dentro de 'Tarjeta': 'Credito', 'Debito'. | Core Bancario | Puede ser nulo. |
-| TasaInteres | DECIMAL(5,2) | - | Tasa de interes anual asociada al producto, expresada en porcentaje. | Core Bancario | Puede ser nulo. |
-| Moneda | VARCHAR(10) | - | Moneda en la que esta denominado el producto. Valor por defecto: 'DOP'. | Core Bancario | No nulo. Valor por defecto: 'DOP'. |
-| EsActivo | BIT | - | Indicador de producto activo. Valor 1 = Activo, 0 = Inactivo. | Core Bancario | No nulo. Valor por defecto: 1. |
-| FechaCarga | DATETIME | - | Marca de tiempo de cuando el registro fue insertado por primera vez en el Data Warehouse. | Generado por el sistema (GETDATE) | No nulo. |
-| FechaActualizacion | DATETIME | - | Marca de tiempo de la ultima actualizacion del registro en el Data Warehouse. | Generado por el sistema (GETDATE) | No nulo. |
+| Column Name | Data Type | PK/FK | Business Description | Quality Rules |
+| :--- | :--- | :--- | :--- | :--- |
+| ProductKey | INT (IDENTITY) | PK | Unique identifier automatically generated for each product within the Data Warehouse. | Not null. Unique. |
+| ProductCode | NVARCHAR(20) | - | Internal product code (e.g. 'P001'). | Not null. |
+| ProductName | NVARCHAR(100) | - | Commercial product name (e.g. 'Cuenta Corriente', 'Tarjeta Credito Oro'). | Not null. |
+| Category | NVARCHAR(50) | - | Product category. Values in the current dataset: 'Cuentas', 'Tarjetas', 'Prestamos', 'Inversiones', 'Seguros'. | Not null. |
+| UnitPrice | DECIMAL(10,2) | - | Flat fee or unit price associated with the product, where applicable (0 for accounts and loans). | Not null. |
 
 ---
 
-## Tabla: DIM_Tiempo
+## Table: DIM_Date
 
-**Descripcion general:** Tabla calendario que contiene todos los dias necesarios para el analisis temporal. Permite agrupar y filtrar transacciones por año, trimestre, mes, semana y dia de la semana. Es una de las dimensiones mas utilizadas en los reportes.
+**General description:** Calendar table containing every day in the covered range. Allows transactions to be grouped and filtered by year, quarter, month, and day of week.
 
-**Volumen estimado:** 365 registros por cada año de datos (ej. 1,095 registros para 3 años).
+**Estimated volume:** 366 records, covering 2024-01-01 through 2024-12-31 in the current dataset.
 
-| Nombre Columna | Tipo Dato | PK/FK | Descripcion de Negocio | Origen | Reglas de Calidad |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| TiempoKey | INT | PK | Identificador unico generado automaticamente para cada fecha dentro del Data Warehouse. | Generado por el sistema (IDENTITY) | No nulo. Unico. |
-| Fecha | DATE | - | Fecha exacta en formato dia/mes/anio. | Generado por el sistema | No nulo. Unico. |
-| Anio | INT | - | Anio correspondiente a la fecha (ej. 2025, 2026). | Generado por el sistema | No nulo. |
-| Trimestre | INT | - | Trimestre del anio. Valores posibles: 1 (Ene-Mar), 2 (Abr-Jun), 3 (Jul-Sep), 4 (Oct-Dic). | Generado por el sistema | No nulo. |
-| Mes | INT | - | Numero del mes. Valores posibles: 1 (Enero) a 12 (Diciembre). | Generado por el sistema | No nulo. |
-| MesNombre | VARCHAR(20) | - | Nombre del mes en español (ej. 'Enero', 'Febrero'). | Generado por el sistema | No nulo. |
-| Semana | INT | - | Numero de semana dentro del anio (1 a 52). | Generado por el sistema | No nulo. |
-| DiaSemana | INT | - | Numero del dia de la semana. Valores posibles: 1 (Domingo) a 7 (Sabado). | Generado por el sistema | No nulo. |
-| DiaSemanaNombre | VARCHAR(15) | - | Nombre del dia de la semana en español (ej. 'Lunes', 'Martes'). | Generado por el sistema | No nulo. |
-| EsFinDeSemana | BIT | - | Indicador de si la fecha cae en fin de semana. Valor 1 = Sabado o Domingo, 0 = Dia laboral. | Generado por el sistema | No nulo. Valor por defecto: 0. |
-| EsDiaFestivo | BIT | - | Indicador de si la fecha es un dia festivo en la Republica Dominicana. (Campo habilitado para futura expansion). | Generado por el sistema | No nulo. Valor por defecto: 0. |
+| Column Name | Data Type | PK/FK | Business Description | Quality Rules |
+| :--- | :--- | :--- | :--- | :--- |
+| DateKey | INT | PK | Date represented as an integer in YYYYMMDD format (e.g. 20240424). Not an IDENTITY column — computed directly from the date. | Not null. Unique. |
+| FullDate | DATE | - | The actual calendar date. | Not null. |
+| Year | INT | - | Calendar year (e.g. 2024). | Not null. |
+| Quarter | INT | - | Quarter of the year (1-4). | Not null. |
+| Month | INT | - | Month number (1-12). | Not null. |
+| MonthName | NVARCHAR(20) | - | Month name in English (e.g. 'January'). | Not null. |
+| DayOfWeek | INT | - | Day-of-week number (1 = Monday through 7 = Sunday, per pandas `dayofweek + 1`). | Not null. |
+| DayName | NVARCHAR(20) | - | Day-of-week name in English (e.g. 'Monday'). | Not null. |
+| IsWeekend | BIT | - | Indicator of whether the date falls on Saturday or Sunday. Value 1 = Weekend, 0 = Weekday. | Not null. |
 
 ---
 
-## Tabla: DIM_Sucursal
+## Table: DIM_Branch
 
-**Descripcion general:** Tabla maestra de sucursales del banco. Contiene informacion geografica de las oficinas fisicas donde los clientes realizan transacciones.
+**General description:** Master table of bank branches — the physical offices where transactions are attributed.
 
-**Volumen estimado:** 50 - 200 registros.
+**Estimated volume:** 5 records in the current synthetic dataset.
 
-| Nombre Columna | Tipo Dato | PK/FK | Descripcion de Negocio | Origen | Reglas de Calidad |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| SucursalKey | INT | PK | Identificador unico generado automaticamente para cada sucursal dentro del Data Warehouse. | Generado por el sistema (IDENTITY) | No nulo. Unico. |
-| SucursalID_Source | VARCHAR(20) | - | Identificador original de la sucursal en el sistema origen. | Core Bancario | No nulo. |
-| NombreSucursal | VARCHAR(100) | - | Nombre comercial de la sucursal (ej. 'Sucursal Naco', 'Oficina Principal'). | Core Bancario | No nulo. |
-| Ciudad | VARCHAR(50) | - | Ciudad donde se encuentra la sucursal. | Core Bancario | Puede ser nulo. |
-| Region | VARCHAR(50) | - | Region geografica donde se encuentra la sucursal (ej. 'Distrito Nacional', 'Santiago', 'Este'). | Core Bancario | Puede ser nulo. |
-| EsActiva | BIT | - | Indicador de sucursal activa. Valor 1 = Activa, 0 = Inactiva o cerrada. | Core Bancario | No nulo. Valor por defecto: 1. |
-| FechaCarga | DATETIME | - | Marca de tiempo de cuando el registro fue insertado por primera vez en el Data Warehouse. | Generado por el sistema (GETDATE) | No nulo. |
+| Column Name | Data Type | PK/FK | Business Description | Quality Rules |
+| :--- | :--- | :--- | :--- | :--- |
+| BranchKey | INT (IDENTITY) | PK | Unique identifier automatically generated for each branch within the Data Warehouse. | Not null. Unique. |
+| BranchCode | NVARCHAR(10) | - | Internal branch code (e.g. 'BR01'). | Not null. |
+| BranchName | NVARCHAR(100) | - | Commercial branch name (e.g. 'Santo Domingo Central'). | Not null. |
+| City | NVARCHAR(50) | - | City where the branch is located. | Not null. |
+| Region | NVARCHAR(50) | - | Geographic region where the branch is located (e.g. 'Distrito Nacional'). | Not null. |
 
 ---
 
-## Tabla: FACT_Transaccion
+## Table: FACT_Transaction
 
-**Descripcion general:** Tabla de hechos principal. Contiene todas las transacciones financieras realizadas por los clientes, consolidadas desde el Core Bancario y el Sistema de Tarjetas. Cada registro representa un evento unico (una transaccion) y esta diseñado para ser agregado (sumado, contado) en los reportes de negocio.
+**General description:** Fact table containing all financial transactions. Each record represents a unique transaction event and is designed to be aggregated (summed, counted) in business reports. This table is subject to Row-Level Security, restricting which branches a given analyst can see (see `sql/security/`).
 
-**Reglas de negocio aplicables:**
-- Cada transacción debe tener al menos una métrica no nula entre `Monto` y `Cantidad`.
-- Si el producto asociado pertenece a una categoría que se mide por cantidad (ej. productos de consumo, unidades vendidas), entonces `Monto` puede ser nulo y `Cantidad` debe tener un valor positivo.
-- Si el producto se mide por monto monetario (ej. prestamos, depositos), entonces `Cantidad` puede ser nula y `Monto` debe tener un valor positivo.
-- Los registros que no cumplan esta regla seran marcados con `FlagCalidad = 0` y se detallara el motivo en `ObservacionCalidad`.
+**Estimated volume:** 63 records in the current synthetic dataset; designed to scale to hundreds of thousands.
 
-**Volumen estimado:** 100,000 - 1,000,000 de registros por año.
-
-| Nombre Columna | Tipo Dato | PK/FK | Descripcion de Negocio | Origen | Reglas de Calidad |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| TransaccionKey | INT | PK | Identificador unico generado automaticamente para cada transaccion dentro del Data Warehouse. No tiene significado en el negocio. | Generado por el sistema (IDENTITY) | No nulo. Unico. |
-| ClienteKey | INT | FK | Clave foranea que conecta con DIM_Cliente. Identifica al cliente que realizo la transaccion. | DIM_Cliente | No nulo. |
-| ProductoKey | INT | FK | Clave foranea que conecta con DIM_Producto. Identifica el producto asociado a la transaccion. | DIM_Producto | No nulo. |
-| TiempoKey | INT | FK | Clave foranea que conecta con DIM_Tiempo. Identifica la fecha en que ocurrio la transaccion. | DIM_Tiempo | No nulo. |
-| SucursalKey | INT | FK | Clave foranea que conecta con DIM_Sucursal. Identifica la sucursal donde se realizo la transaccion. Puede ser nulo para transacciones digitales. | DIM_Sucursal | Puede ser nulo si la transaccion fue por canal digital. |
-| Monto | DECIMAL(18,2) | - | Monto de la transaccion en la moneda original del sistema fuente (usualmente DOP). Es la metrica principal para los analisis financieros. | Core Bancario o Sistema de Tarjetas | Puede ser nulo si la transaccion se mide por cantidad |
-| MontoUSD | DECIMAL(18,2) | - | Monto de la transaccion convertido a dolares americanos para analisis comparativos internacionales. | Generado por el sistema (conversion) | Puede ser nulo si no se aplica conversion. |
-| Cantidad | INT | - | Numero de unidades involucradas en la transaccion (aplica para productos que se miden por cantidad, no por monto). | Core Bancario o Sistema de Tarjetas | Puede ser nulo. |
-| TransaccionID_Source | VARCHAR(50) | - | Identificador unico de la transaccion en el sistema origen. Permite rastrear el evento hasta su fuente original. | Core Bancario o Sistema de Tarjetas | No nulo. |
-| FuenteOrigen | VARCHAR(20) | - | Nombre del sistema del cual proviene el registro. Valores posibles: 'Core' o 'Tarjetas'. | Sistema origen | No nulo. |
-| TipoTransaccion | VARCHAR(30) | - | Tipo de operacion realizada. Ejemplos: 'Deposito', 'Retiro', 'Pago', 'Consumo', 'Transferencia'. | Core Bancario o Sistema de Tarjetas | Puede ser nulo. |
-| Canal | VARCHAR(30) | - | Canal a traves del cual se realizo la transaccion. Ejemplos: 'Sucursal', 'ATM', 'App Movil', 'Web', 'Punto de Venta'. | Core Bancario o Sistema de Tarjetas | Puede ser nulo. |
-| Estatus | VARCHAR(20) | - | Estado final de la transaccion. Valores posibles: 'Completada', 'Rechazada', 'Pendiente'. | Core Bancario o Sistema de Tarjetas | No nulo. Valor por defecto: 'Completada'. |
-| FechaCarga | DATETIME | - | Marca de tiempo de cuando el registro fue insertado por primera vez en el Data Warehouse. | Generado por el sistema (GETDATE) | No nulo. |
-| FechaActualizacion | DATETIME | - | Marca de tiempo de la ultima actualizacion del registro en el Data Warehouse. | Generado por el sistema (GETDATE) | No nulo. |
-| FlagCalidad | BIT | - | Bandera de calidad de los datos. Valor 1 = Datos validos y confiables. Valor 0 = Datos sospechosos o que incumplen reglas de calidad. | Generado por el sistema (validacion) | No nulo. Valor por defecto: 1. |
-| ObservacionCalidad | VARCHAR(255) | - | Descripcion detallada del error de calidad si FlagCalidad = 0. Ejemplo: 'Monto negativo detectado', 'Cedula del cliente no coincide con el sistema Core'. | Generado por el sistema (validacion) | Puede ser nulo. |
+| Column Name | Data Type | PK/FK | Business Description | Quality Rules |
+| :--- | :--- | :--- | :--- | :--- |
+| TransactionKey | INT (IDENTITY) | PK | Unique identifier automatically generated for each transaction within the Data Warehouse. | Not null. Unique. |
+| CustomerKey | INT | FK | Foreign key to DIM_Customer. Identifies the customer who made the transaction. | Not null. |
+| ProductKey | INT | FK | Foreign key to DIM_Product. Identifies the product involved in the transaction. | Not null. |
+| DateKey | INT | FK | Foreign key to DIM_Date. Identifies the date the transaction occurred. | Not null. |
+| BranchKey | INT | FK | Foreign key to DIM_Branch. Identifies the branch the transaction is attributed to. | Not null. |
+| Amount | DECIMAL(15,2) | - | Transaction amount. Primary metric for financial analysis. | Not null. |
+| Quantity | INT | - | Number of units involved in the transaction. | Not null. |
+| TransactionType | NVARCHAR(20) | - | Type of operation. Values in the current dataset: 'Purchase', 'Withdrawal', 'Deposit', 'Transfer'. | Not null. |
+| FlagQuality | BIT | - | Data quality flag. Value 1 = clean record, 0 = flagged record. In the current synthetic dataset this is generated randomly (~10% flagged) rather than derived from a business validation rule. | Not null. Default value: 1. |
 
 ---
 
-## Glosario de Terminos Clave
+## Key Terms Glossary
 
-| Termino | Definicion |
+| Term | Definition |
 | :--- | :--- |
-| Clave Sustituta (Surrogate Key) | Identificador numerico generado automaticamente por el sistema, sin significado en el mundo real. Se usa para garantizar la unicidad y estabilidad de las claves primarias en el Data Warehouse. |
-| Clave de Negocio (Business Key / Golden Key) | Identificador del mundo real que el negocio reconoce (ej. Cedula, Codigo de Producto). Se usa para unificar registros de diferentes fuentes. |
-| DWH | Data Warehouse. Almacen centralizado de datos historicos optimizado para consultas analiticas. |
-| OLTP | Sistema transaccional. Disenado para operaciones diarias (insertar, actualizar, eliminar). |
-| OLAP | Sistema analitico. Disenado para consultas complejas y agregaciones (sumas, promedios, agrupaciones). |
-| ETL | Extraccion, Transformacion y Carga. Proceso que mueve datos desde los sistemas origen hasta el Data Warehouse. |
-| Metadato | Datos que describen otros datos. Ejemplo: el diccionario de datos es un conjunto de metadatos. |
+| Surrogate Key | System-generated numeric identifier with no real-world meaning. Used to guarantee the uniqueness and stability of primary keys in the Data Warehouse. |
+| DWH | Data Warehouse. Centralized store of historical data optimized for analytical queries. |
+| OLTP | Transactional system. Designed for day-to-day operations (insert, update, delete). |
+| OLAP | Analytical system. Designed for complex queries and aggregations (sums, averages, groupings). |
+| ETL | Extract, Transform, and Load. Process that moves data from source files into the Data Warehouse. |
+| RLS | Row-Level Security. SQL Server feature used in this project to restrict which rows of FACT_Transaction each user can see, based on branch assignment. |
 
 ---
 
-**Historial de Versiones**
+**Version History**
 
-| Version | Fecha | Autor | Cambios |
+| Version | Date | Author | Changes |
 | :--- | :--- | :--- | :--- |
-| 1.0 | Agosto 2026 | Alejandro Velazquez | Creacion inicial del documento. |
+| 1.0 | August 2026 | Alejandro Velazquez | Initial document creation (Spanish). |
+| 2.0 | August 2026 | Alejandro Velazquez | Translated to English and rewritten to match the actual implemented schema (`sql/create_tables.sql`). |

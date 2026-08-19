@@ -1,67 +1,67 @@
 # Project Charter - Banking Data Warehouse
 
-## 1. Identificación del Proyecto
+## 1. Project Identification
 
-| Campo | Valor |
+| Field | Value |
 | :--- | :--- |
-| **Nombre del Proyecto** | Banking Data Warehouse & ETL Pipeline |
-| **Líder de Proyecto** | Alejandro Velázquez |
-| **Fecha de Inicio** | Agosto 2026 |
-| **Fecha Estimada de Cierre** | Septiembre 2026 |
+| **Project Name** | Banking Data Warehouse & ETL Pipeline |
+| **Project Lead** | Alejandro Velazquez |
+| **Start Date** | August 2026 |
+| **Estimated Close Date** | September 2026 |
 
 ---
 
-## 2. Objetivo del Proyecto
+## 2. Project Objective
 
-Construir un Data Warehouse para el área de Negocios que consolide información de dos sistemas fuente (Core Bancario y Tarjetas), aplicando estándares de gobernabilidad, calidad de datos y modelado dimensional, con el fin de facilitar la toma de decisiones estratégicas.
-
----
-
-## 3. Alcance
-
-### Dentro del Alcance:
-- Diseño de modelo dimensional en estrella (Star Schema).
-- Pipeline ETL en Python para extraer, limpiar y cargar datos.
-- Controles automatizados de calidad de datos (nulos, duplicados, formatos).
-- Documentación de metadatos y linaje.
-- Tablero ejecutivo en Power BI.
-
-### Fuera del Alcance:
-- Migración de datos en producción (es un entorno simulado).
-- Automatización en tiempo real (procesamiento batch).
-- Implementación de Data Lake o Big Data.
+Build a Data Warehouse for the Business area that consolidates information from two source systems (Core Banking and Card System), applying governance standards, data quality controls, and dimensional modeling, in order to support strategic decision-making.
 
 ---
 
-## 4. Riesgos Identificados y Mitigación
+## 3. Scope
 
-| Riesgo | Impacto | Mitigación |
+### In Scope:
+- Star Schema dimensional model design.
+- Python ETL pipeline to extract, clean, and load data.
+- Automated data quality controls (nulls, duplicates, formats).
+- Metadata and lineage documentation.
+- Executive dashboard in Power BI.
+
+### Out of Scope:
+- Production data migration (this is a simulated environment).
+- Real-time automation (batch processing only).
+- Data Lake or Big Data implementation.
+
+---
+
+## 4. Identified Risks and Mitigation
+
+| Risk | Impact | Mitigation |
 | :--- | :--- | :--- |
-| **Calidad de datos inconsistentes** en fuentes origen | Alto | Implementar reglas de validación y rechazo en la fase de transformación. Generar logs de errores. |
-| **Duplicidad de clientes** entre sistemas | Alto | Definir una clave de negocio única (Cédula/RNC) como *golden key* para el MDM. |
-| **Obsolescencia tecnológica** del modelo | Medio | Diseñar el modelo con estándares abiertos y documentación clara para facilitar futuras migraciones. |
-| **Resistencia al cambio** de equipos operativos | Medio | Involucrar a las áreas de negocio en la definición de las dimensiones clave. |
+| **Inconsistent data quality** in source systems | High | Implement validation and rejection rules in the transformation phase. Generate error logs. |
+| **Duplicate customers** across systems | High | Define a unique business key (National ID) as the *golden key* for MDM. |
+| **Technological obsolescence** of the model | Medium | Design the model with open standards and clear documentation to facilitate future migrations. |
+| **Resistance to change** from operational teams | Medium | Involve business areas in defining key dimensions. |
 
 ---
 
-## 5. Cronograma de Alto Nivel (Sprints)
+## 5. High-Level Timeline (Sprints)
 
-| Sprint | Duración | Entregable |
+| Sprint | Duration | Deliverable |
 | :--- | :--- | :--- |
-| **Sprint 1** | 2 Semanas | Definición de requerimientos y diseño del Star Schema. |
-| **Sprint 2** | 2 Semanas | Desarrollo del pipeline ETL (Extracción y Limpieza). |
-| **Sprint 3** | 2 Semanas | Carga al Data Warehouse y validación de calidad. |
-| **Sprint 4** | 1 Semana | Construcción de Dashboards y documentación final. |
+| **Sprint 1** | 2 Weeks | Requirements definition and Star Schema design. |
+| **Sprint 2** | 2 Weeks | ETL pipeline development (Extraction and Cleansing). |
+| **Sprint 3** | 2 Weeks | Data Warehouse load and quality validation. |
+| **Sprint 4** | 1 Week | Dashboard build-out and final documentation. |
 
 ---
 
-## 6. Aprobaciones
+## 6. Approvals
 
-| Rol | Nombre | Firma |
+| Role | Name | Signature |
 | :--- | :--- | :--- |
-| **Líder de Proyecto** | Alejandro Velázquez | *(En curso)* |
-| **Arquitecto de Datos (Revisor)** | *(Por definir)* | *(En curso)* |
+| **Project Lead** | Alejandro Velazquez | *(In progress)* |
+| **Data Architect (Reviewer)** | *(To be defined)* | *(In progress)* |
 
 ---
 
-*Documento elaborado bajo los estándares de gobernabilidad y gestión de proyectos.*
+*Document prepared under project governance and management standards.*
