@@ -135,7 +135,7 @@ git clone https://github.com/alejandrov07/banking-data-warehouse-etl.git
 Run the table creation script in SQL Server:
 
 ```bash
-sql/create_tables_english.sql
+sql/create_tables.sql
 ```
 
 ### 3. Apply the Security Layer
@@ -151,7 +151,6 @@ Run scripts in order inside `sql/security/`:
 7. `rls_dim_customer_function.sql` – Creates the RLS predicate function for DIM_Customer.
 8. `rls_dim_customer_policy.sql` – Binds the function to DIM_Customer (creates policy in OFF state).
 9. `rls_dim_customer_index.sql` – Creates the performance index on FACT_Transaction for subquery optimization.
-10. `rls_dim_customer_test.sql` – Activates both policies and runs validation tests.
 
 ### 4. Install Python dependencies
 
@@ -193,8 +192,7 @@ banking-data-warehouse-etl/
 │   ├── lineage.md
 │   └── project_charter.md
 ├── sql/
-│   ├── create_tables_english.sql
-│   ├── clear_all_tables.sql
+│   ├── create_tables.sql
 │   └── security/
 │       ├── setup_principals.sql
 │       ├── user_branch_mapping.sql
@@ -205,7 +203,7 @@ banking-data-warehouse-etl/
 │       ├── rls_dim_customer_function.sql      # NEW (Day 4)
 │       ├── rls_dim_customer_policy.sql        # NEW (Day 4)
 │       ├── rls_dim_customer_index.sql         # NEW (Day 4)
-│       └── rls_dim_customer_test.sql          # NEW (Day 4)
+│       └── rename_spanish_objects_to_english.sql
 ├── src/
 │   ├── generate_data.py
 │   └── etl_pipeline.py

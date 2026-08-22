@@ -8,19 +8,19 @@ This document describes the Row-Level Security implementation on the Banking Dat
 
 ## RLS Policies Implemented
 
-### 1. `Security.pol_transacciones` (on `FACT_Transaction`)
+### 1. `Security.pol_transaction` (on `FACT_Transaction`)
 
 - **Purpose:** Restricts analysts to only view transactions from their assigned branches.
-- **Predicate Function:** `Security.fn_predicate_transacciones(@usuario, @branchKey)`
+- **Predicate Function:** `Security.fn_predicate_transaction(@userName, @branchKey)`
 - **Logic:**
   - If user is `AuditCompliance`, `DWHAdmin`, or `ETLService` → return `1` (all rows).
-  - Else, check if `@branchKey` exists in `Security.UserBranch` for `@usuario`.
+  - Else, check if `@branchKey` exists in `Security.UserBranch` for `@userName`.
 - **Status:** Active and tested.
 
 ### 2. `Security.pol_customer` (on `DIM_Customer`)
 
 - **Purpose:** Restricts analysts to only see customers who have made transactions in their assigned branches.
-- **Predicate Function:** `Security.fn_predicate_customer(@usuario, @customerKey)`
+- **Predicate Function:** `Security.fn_predicate_customer(@userName, @customerKey)`
 - **Logic:**
   - If user is `AuditCompliance` or `DWHAdmin` → return `1` (all rows).
   - Else, check if there exists a transaction in `FACT_Transaction` where `CustomerKey = @customerKey` and `BranchKey` is in the user's assigned branches.
