@@ -16,10 +16,6 @@
 USE BankingDWH;
 GO
 
--- Drop the old function (it has the wrong signature)
-DROP FUNCTION IF EXISTS Security.fn_predicate_transacciones;
-GO
-
 CREATE FUNCTION Security.fn_predicate_transacciones(
     @usuario sysname,
     @sucursalKey INT
