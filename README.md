@@ -17,7 +17,7 @@ Beyond the standard ETL pipeline and Star Schema modeling, I implemented a produ
 - **Row-Level Security (RLS) on FACT_Transaction:** Restricts analysts to only view transactions from their assigned branches. **Status:** ✅ Implemented & Tested
 - **Row-Level Security (RLS) on DIM_Customer:** Analysts only see customers who have transactions in their assigned branches. Uses subquery logic against FACT_Transaction. **Status:** ✅ Implemented & Tested (Day 4)
 - **Performance Optimization:** Composite indexes on FACT_Transaction (CustomerKey, BranchKey) and Security.UserBranch (UserName, BranchKey) ensure RLS predicates execute efficiently. **Status:** ✅ Optimized & Measured
-- **Dynamic Data Masking (DDM):** Automatically obfuscates PII (Cedula, Email, Phone) for non-privileged users. **Status:** ✅ Implemented & Tested (Day 6)
+- **Dynamic Data Masking (DDM):** Automatically obfuscates PII (Cedula, Email, Phone) for non-privileged users. **Status:** ✅ Implemented & Tested
 - **Native Server Auditing:** Tracks every SELECT, INSERT, UPDATE, and DELETE on sensitive tables, providing a forensic audit trail. **Status:** ⏳ Planned
 
 ---
