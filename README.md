@@ -198,7 +198,8 @@ banking-data-warehouse-etl/
 │   ├── data_dictionary.md
 │   ├── lineage.md
 │   ├── project_charter.md
-│   └── security_ddm.md            # NEW (Day 6)
+│   ├── security_audit.md          # NEW
+│   └── security_ddm.md
 ├── sql/
 │   ├── create_tables.sql
 │   └── security/
@@ -211,10 +212,13 @@ banking-data-warehouse-etl/
 │       ├── rls_dim_customer_function.sql
 │       ├── rls_dim_customer_policy.sql
 │       ├── rls_dim_customer_index.sql
-│       ├── dynamic_data_masking.sql      # NEW
-│       ├── test_ddm.sql                  # NEW 
- (Day 6)
-│       └── rename_spanish_objects_to_english.sql
+│       ├── dynamic_data_masking.sql
+│       ├── audit_setup_master.sql
+│       ├── audit_setup_database.sql       # NEW
+│       ├── audit_processing.sql           # NEW
+│       └── test_ddm.sql                   # NEW
+│  
+│  
 ├── src/
 │   ├── generate_data.py
 │   └── etl_pipeline.py
