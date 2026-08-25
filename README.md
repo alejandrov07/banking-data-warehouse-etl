@@ -1,36 +1,40 @@
 # Banking Data Warehouse & Security Layer
 
-**Status:** Core DWH Complete | Security Layer: RLS, DDM & Auditing Fully Implemented | Performance Optimized
+**Status:** Core DWH Complete | Security Layer: RLS, DDM & Auditing Fully Implemented | Deployment Orchestrated | Performance Optimized
 
-A fully functional Data Warehouse for a simulated banking environment, extended with enterprise-grade security controls including Row-Level Security on both fact and dimension tables, with performance metrics to prove scalability.
+A fully functional Data Warehouse for a simulated banking environment, extended with SQL Server security controls including Row-Level Security on fact and dimension tables, Dynamic Data Masking, native auditing, role-based permissions, and performance optimization.
 
 ---
 
 ## Project Overview
 
-This project simulates the integration of two hypothetical banking systems to build a unified view of transactions and customers. It solves real-world data quality issues like duplicates, missing standards, and inconsistent formats.
+This project simulates the integration of two hypothetical banking systems to build a unified view of customers and transactions. It addresses common data engineering challenges such as inconsistent formats, duplicates, standardization, and data quality validation.
 
-**What makes this project unique:**
+### What makes this project unique
 
-Beyond the standard ETL pipeline and Star Schema modeling, I implemented a production-ready security layer using SQL Server native features:
+Beyond the ETL pipeline and Star Schema model, the project includes a complete SQL Server security layer and an orchestrated deployment script that rebuilds the database and its security controls from scratch.
 
-- **Row-Level Security (RLS) on `FACT_Transaction`:** Restricts analysts to only view transactions from their assigned branches. **Status:** ✅ Implemented & Tested
-- **Row-Level Security (RLS) on `DIM_Customer`:** Analysts only see customers who have transactions in their assigned branches. Uses subquery logic against `FACT_Transaction`. **Status:** ✅ Implemented & Tested (Day 4)
-- **Performance Optimization:** Composite indexes on `FACT_Transaction (CustomerKey, BranchKey)` and `Security.UserBranch (UserName, BranchKey)` ensure RLS predicates execute efficiently. **Status:** ✅ Optimized & Measured
-- **Dynamic Data Masking (DDM):** Automatically obfuscates PII (Cedula, Email, Phone) for non-privileged users. **Status:** ✅ Implemented & Tested (Day 6)
-- **Native Server Auditing:** Tracks every SELECT, INSERT, UPDATE, and DELETE on sensitive tables, providing a forensic audit trail. **Status:** ✅ Implemented & Tested (Day 7)
+- **Row-Level Security (RLS) on `FACT_Transaction`:** Analysts are restricted to transactions from their assigned branches. ✅ Implemented & Tested
+- **Row-Level Security (RLS) on `DIM_Customer`:** Analysts only see customers associated with transactions in their assigned branches. ✅ Implemented & Tested
+- **Performance Optimization:** Composite indexes support the RLS predicates and customer-access subquery. ✅ Optimized & Measured
+- **Dynamic Data Masking (DDM):** Masks PII including `Cedula`, `Email`, and `Phone` for non-privileged users. ✅ Implemented & Tested
+- **Native SQL Server Auditing:** Captures `SELECT`, `INSERT`, `UPDATE`, and `DELETE` activity on sensitive tables and supports consolidation into `Security.AuditLog`. ✅ Implemented & Tested
+- **Orchestrated Deployment:** `deploy.sql` creates the database, server principals, users, data, RLS, DDM, permissions, auditing, and post-deployment verification. ✅ Implemented & Tested
 
 ---
 
 ## Professional Objective
 
-This repository is part of my technical portfolio, demonstrating my competencies for Data Engineering, Analytics Engineering, and Database Administration roles:
+This repository is part of my technical portfolio, demonstrating competencies for:
 
-- Dimensional modeling (Star Schema) for Data Warehousing.
-- ETL/ELT pipeline development with Python (Pandas) and SQL Server.
-- Implementation of database security controls (RLS, DDM, Auditing).
-- Performance tuning and index optimization for security predicates.
-- Strategic data visualization with Power BI.
+- Data Engineering
+- Analytics Engineering
+- Database Administration
+- Dimensional modeling and Data Warehousing
+- ETL/ELT pipeline development
+- Database security and access control
+- SQL Server performance optimization
+- Business intelligence and reporting
 
 ---
 
@@ -38,10 +42,11 @@ This repository is part of my technical portfolio, demonstrating my competencies
 
 | Component | Technology |
 |---|---|
-| Extraction & Load | Python (Pandas, SQLAlchemy) |
-| Database | SQL Server (Developer Edition) |
-| Modeling | Star Schema (Dimensions & Fact) |
-| Security Layer | Row-Level Security (Fact + Dimensions), Dynamic Data Masking, Auditing |
+| Extraction & Load | Python, Pandas, SQLAlchemy, pyodbc |
+| Database | SQL Server Developer Edition |
+| Modeling | Star Schema |
+| Security | RLS, Dynamic Data Masking, Native Auditing |
+| Deployment | T-SQL orchestrated deployment (`deploy.sql`) |
 | BI / Dashboards | Power BI Desktop |
 | Version Control | Git / GitHub |
 
@@ -49,67 +54,212 @@ This repository is part of my technical portfolio, demonstrating my competencies
 
 ## Key Features
 
-### 1. Dimensional Modeling (Star Schema)
+### 1. Dimensional Modeling
 
-Designed a classic Star Schema with 4 dimensions (`DIM_Customer`, `DIM_Product`, `DIM_Date`, `DIM_Branch`) and 1 fact table (`FACT_Transaction`) to enable fast analytical queries.
+The warehouse uses a classic Star Schema with four dimensions and one fact table:
+
+- `DIM_Customer`
+- `DIM_Product`
+- `DIM_Date`
+- `DIM_Branch`
+- `FACT_Transaction`
+
+The current synthetic dataset contains:
+
+| Table | Rows |
+|---|---:|
+| `DIM_Customer` | 20 |
+| `DIM_Product` | 10 |
+| `DIM_Date` | 366 |
+| `DIM_Branch` | 5 |
+| `FACT_Transaction` | 63 |
 
 ### 2. Automated ETL Pipeline
 
-Built a Python ETL pipeline using Pandas that:
+The Python pipeline:
 
-- Generates synthetic banking data (20 customers, 10 products, 366 dates, 5 branches, 63 transactions).
+- Generates synthetic banking data.
 - Cleans and standardizes formats.
-- Deduplicates client records.
-- Loads transformed data into SQL Server using `IDENTITY_INSERT` to maintain foreign key integrity.
+- Deduplicates customer records.
+- Loads transformed data into SQL Server.
+- Maintains key relationships during loading.
+
+Main scripts:
+
+```text
+src/generate_data.py
+src/etl_pipeline.py
+```
 
 ### 3. Enterprise Security Layer
 
-#### Row-Level Security (RLS) on `FACT_Transaction` — COMPLETED & OPTIMIZED
+#### Row-Level Security — `FACT_Transaction`
 
-A dynamic filtering policy ensures analysts see only their branch data. The predicate function accepts the current user and the row's branch key, cross-references it with `Security.UserBranch`, and returns 1 only if the user is authorized. `AuditCompliance`, `DWHAdmin`, and `ETLService` are exempt from the filter. Tested successfully with `EXECUTE AS` across multiple personas.
+The transaction predicate checks the current database user and the row's `BranchKey` against `Security.UserBranch`.
 
-#### Row-Level Security (RLS) on `DIM_Customer` — COMPLETED & OPTIMIZED (Day 4)
+Analyst mappings:
 
-Extended RLS to the customer dimension using a subquery against `FACT_Transaction`. Analysts only see customers who have made transactions in their assigned branches.
+- `LauraGomez` → branches 1 and 2
+- `CarlosMendez` → branch 3
 
-**Test results:**
+`AuditCompliance`, `DWHAdmin`, and `ETLService` are exempted from the RLS filter.
 
-- `LauraGomez` sees 14 customers (branches 1, 2)
-- `CarlosMendez` sees 12 customers (branch 3)
-- `AuditCompliance` / `DWHAdmin` see all 20 customers
+#### Row-Level Security — `DIM_Customer`
 
-#### Performance Optimization — COMPLETED (Day 4)
+The customer predicate checks whether a customer has a transaction in a branch assigned to the current analyst.
 
-To ensure RLS scales with data growth, I created:
+Current synthetic test results:
 
-- Composite index on `FACT_Transaction (CustomerKey, BranchKey)` for fast subquery lookups.
-- Composite index on `Security.UserBranch (UserName, BranchKey)` for fast user-branch resolution.
+| User | Transactions | Customers |
+|---|---:|---:|
+| `LauraGomez` | 31 | 14 |
+| `CarlosMendez` | 14 | 12 |
+| `AuditCompliance` | 63 | 20 |
+| `DWHAdmin` | 63 | 20 |
 
-**Performance Metrics (STATISTICS IO):**
+#### RLS Verification Note
 
-After optimization, executing `SELECT * FROM DIM_Customer` as `LauraGomez` produced:
+`DIM_Customer` and `FACT_Transaction` are protected by RLS. Therefore, a plain `COUNT(*)` can return `0` when executed under a context that is not exempt from the RLS predicates.
 
-- `FACT_Transaction`: 30 scans, 60 logical reads (2 per customer)
-- `UserBranch`: 20 scans, 40 logical reads (2 per customer)
-- `DIM_Customer`: 1 scan, 2 logical reads
+For administrative verification, run the count query as `DWHAdmin` or `AuditCompliance`:
 
-**Total logical reads: 102.** This demonstrates that even with subqueries, RLS can be highly performant with proper indexing.
+```sql
+USE BankingDWH;
+GO
 
-#### Dynamic Data Masking (DDM) — COMPLETED (Day 6)
+EXECUTE AS USER = 'DWHAdmin';
 
-Sensitive columns (`Cedula`, `Email`, `Phone`) are masked for analysts. Auditors, admins, and `ETLService` see full data. Mask functions: `partial(4, "XXXX-", 0)` for Cedula, `email()` for Email, and `partial(0, "XXXX-XXXX-", 4)` for Phone. Documentation available at `docs/security_ddm.md`.
+SELECT 'DIM_Customer' AS TableName, COUNT(*) AS TotalRows
+FROM dbo.DIM_Customer
+UNION ALL
+SELECT 'DIM_Product', COUNT(*)
+FROM dbo.DIM_Product
+UNION ALL
+SELECT 'DIM_Date', COUNT(*)
+FROM dbo.DIM_Date
+UNION ALL
+SELECT 'DIM_Branch', COUNT(*)
+FROM dbo.DIM_Branch
+UNION ALL
+SELECT 'FACT_Transaction', COUNT(*)
+FROM dbo.FACT_Transaction;
 
-#### Audit Trail — COMPLETED (Day 7)
+REVERT;
+GO
+```
 
-Native SQL Server auditing captures SELECT, INSERT, UPDATE, and DELETE on `FACT_Transaction` and `DIM_Customer`. Audit logs are written to files and can be consolidated into a queryable table (`Security.AuditLog`) using the stored procedure `Security.sp_LoadAuditLog`. Documentation available at `docs/security_audit.md`.
+Expected counts:
 
-### 4. Power BI Dashboards
+| TableName | TotalRows |
+|---|---:|
+| `DIM_Customer` | 20 |
+| `DIM_Product` | 10 |
+| `DIM_Date` | 366 |
+| `DIM_Branch` | 5 |
+| `FACT_Transaction` | 63 |
 
-Interactive dashboards connected to the DWH, displaying:
+### 4. Performance Optimization
 
-- Monthly sales trends.
-- Top clients by transaction volume.
-- Data quality metrics (clean vs. flagged transactions).
+The RLS implementation is supported by:
+
+- `Security.UserBranch (UserName, BranchKey)`
+- `FACT_Transaction (CustomerKey, BranchKey)`
+
+Measured with SQL Server `STATISTICS IO`:
+
+| Table | Scan Count | Logical Reads | Physical Reads |
+|---|---:|---:|---:|
+| `FACT_Transaction` | 30 | 60 | 1 |
+| `UserBranch` | 20 | 40 | 1 |
+| `DIM_Customer` | 1 | 2 | 1 |
+
+**Total Logical Reads: 102**
+
+The indexes reduce the cost of branch authorization and the customer RLS subquery.
+
+### 5. Dynamic Data Masking
+
+Sensitive columns in `DIM_Customer` are masked for non-privileged users:
+
+- `Cedula` → `partial(4, "XXXX-", 0)`
+- `Email` → `email()`
+- `Phone` → `partial(0, "XXXX-XXXX-", 4)`
+
+`AuditCompliance`, `DWHAdmin`, and `ETLService` receive `UNMASK`.
+
+Documentation:
+
+```text
+docs/security_ddm.md
+```
+
+### 6. Native SQL Server Auditing
+
+Native auditing captures `SELECT`, `INSERT`, `UPDATE`, and `DELETE` events for:
+
+- `dbo.FACT_Transaction`
+- `dbo.DIM_Customer`
+
+The project uses:
+
+- Server Audit: `BankingDWH_Audit`
+- Database Audit Specification: `BankingDWH_Audit_Spec`
+- Audit table: `Security.AuditLog`
+- Processing procedure: `Security.sp_LoadAuditLog`
+
+Documentation:
+
+```text
+docs/security_audit.md
+```
+
+The deployment also handles an existing `BankingDWH_Audit` by disabling it before dropping and recreating it.
+
+### 7. Orchestrated Deployment
+
+The recommended deployment entry point is:
+
+```text
+deploy.sql
+```
+
+The script orchestrates:
+
+1. Database recreation
+2. Server-level logins
+3. Server Audit creation/recreation
+4. Security schema and database users
+5. Star Schema tables
+6. Synthetic data loading
+7. RLS and supporting indexes
+8. DDM
+9. Permissions
+10. Native auditing
+11. Post-deployment verification
+
+The deployment requires **sysadmin** privileges.
+
+Deployment documentation:
+
+```text
+docs/deployment.md
+```
+
+---
+
+## Power BI Dashboards
+
+The project includes a Power BI dashboard:
+
+```text
+dashboards/banking_dashboard.pbix
+```
+
+The documented dashboards include:
+
+- Monthly transaction trends
+- Top clients by transaction volume
+- Data quality metrics
 
 ![Dashboard Tendencia](docs/assets/dashboard_tendencia.png)
 
@@ -119,14 +269,14 @@ Interactive dashboards connected to the DWH, displaying:
 
 | Day | Milestone | Status |
 |---|---|---|
-| Day 1 | Created Security schema, server logins, database users, and branch mapping table. Granted base SELECT permissions. | ✅ Complete |
-| Day 2 | Built inline RLS predicate function and attached it to `FACT_Transaction` via a Security Policy. Tested with `EXECUTE AS` for all roles. | ✅ Complete |
-| Day 3 | Refactored entire schema to English table/column names. Optimized RLS with a composite index. Validated RLS with real tests. | ✅ Complete |
-| Day 4 | Extended RLS to `DIM_Customer` with subquery logic. Created performance index on `FACT_Transaction`. Measured and documented performance metrics. | ✅ Complete |
-| Day 5 | (Checkpoint 1) – Reflection on RLS experience and documentation. | ✅ Complete |
-| Day 6 | Applied Dynamic Data Masking to `DIM_Customer` (`Cedula`, `Email`, `Phone`) and granted UNMASK to `AuditCompliance`, `DWHAdmin`, and `ETLService`. | ✅ Complete |
-| **Day 7** | **Implemented Native SQL Server Auditing on `FACT_Transaction` and `DIM_Customer`. Created server audit, database specification, `AuditLog` table, and log processing stored procedure.** | **✅ Complete** |
-| Day 8–10 | Integration testing, script deployment, and final documentation. | ⏳ Planned |
+| Day 1 | Security schema, server logins, database users, branch mapping, and base permissions. | ✅ Complete |
+| Day 2 | RLS predicate and policy for `FACT_Transaction`. | ✅ Complete |
+| Day 3 | Schema refactoring and initial RLS optimization. | ✅ Complete |
+| Day 4 | RLS on `DIM_Customer`, supporting indexes, and STATISTICS IO measurements. | ✅ Complete |
+| Day 5 | RLS checkpoint and documentation. | ✅ Complete |
+| Day 6 | Dynamic Data Masking on `DIM_Customer`. | ✅ Complete |
+| Day 7 | Native SQL Server Auditing and audit log processing. | ✅ Complete |
+| Day 8–10 | Deployment integration, deployment troubleshooting, and final verification. | ✅ Complete |
 | Day 11–15 | Additional enhancements and final reflection. | ⏳ Planned |
 
 ---
@@ -137,50 +287,90 @@ Interactive dashboards connected to the DWH, displaying:
 
 ```bash
 git clone https://github.com/alejandrov07/banking-data-warehouse-etl.git
+cd banking-data-warehouse-etl
 ```
 
-### 2. Set up the database
+### 2. Prepare SQL Server
 
-Run the table creation script in SQL Server:
+Before deployment:
+
+- Use SQL Server with sufficient privileges to create databases, logins, audits, and security objects.
+- Connect with **sysadmin** privileges.
+- Ensure `C:\SQLAudit\` exists.
+- Ensure the SQL Server service account has write access to `C:\SQLAudit\`.
+- Replace the placeholder passwords in `deploy.sql` for non-local environments.
+
+### 3. Run the orchestrated deployment
+
+Open:
 
 ```text
-sql/create_tables.sql
+deploy.sql
 ```
 
-### 3. Apply the Security Layer
+in SSMS and execute the entire script.
 
-Run scripts in order inside `sql/security/`:
+This is the recommended deployment path because it handles the required object dependencies automatically.
 
-1. `setup_principals.sql` – Creates logins, users, and security schema.
-2. `user_branch_mapping.sql` – Defines which analyst owns which branch.
-3. `grant_base_permissions.sql` – Grants base read permissions.
-4. `rls_predicate_function.sql` – Creates the inline RLS predicate function for `FACT_Transaction`.
-5. `rls_policy.sql` – Binds the function to `FACT_Transaction` (creates policy in OFF state).
-6. `rls_index_optimization.sql` – Creates the performance index on `Security.UserBranch`.
-7. `rls_dim_customer_function.sql` – Creates the RLS predicate function for `DIM_Customer`.
-8. `rls_dim_customer_policy.sql` – Binds the function to `DIM_Customer` (creates policy in OFF state).
-9. `rls_dim_customer_index.sql` – Creates the performance index on `FACT_Transaction` for subquery optimization.
-10. `dynamic_data_masking.sql` – Applies Dynamic Data Masking to `DIM_Customer` and grants UNMASK permissions.
-11. `audit_setup_master.sql` – Run in the `master` database to create the server audit and grant permissions to `AuditCompliance`.
-12. `audit_setup_database.sql` – Run in the `BankingDWH` database to create the database audit specification.
-13. `audit_processing.sql` – Run in the `BankingDWH` database to create the `Security.AuditLog` table and the `sp_LoadAuditLog` stored procedure.
+### 4. Verify the deployment
 
-### 4. Install Python dependencies
+The final verification checks row counts.
 
-```bash
-pip install pandas sqlalchemy pyodbc
+Because RLS applies to `DIM_Customer` and `FACT_Transaction`, use `DWHAdmin` or `AuditCompliance` for a full administrative verification.
+
+Expected counts:
+
+```text
+DIM_Customer        20
+DIM_Product         10
+DIM_Date            366
+DIM_Branch          5
+FACT_Transaction    63
 ```
 
-### 5. Generate and load data
+### 5. Validate RLS
 
-```bash
-python src/generate_data.py
-python src/etl_pipeline.py
+Use `EXECUTE AS`:
+
+```sql
+USE BankingDWH;
+GO
+
+EXECUTE AS USER = 'LauraGomez';
+
+SELECT COUNT(*) AS Laura_Transactions
+FROM dbo.FACT_Transaction;
+
+SELECT COUNT(*) AS Laura_Customers
+FROM dbo.DIM_Customer;
+
+REVERT;
+GO
+
+EXECUTE AS USER = 'CarlosMendez';
+
+SELECT COUNT(*) AS Carlos_Transactions
+FROM dbo.FACT_Transaction;
+
+SELECT COUNT(*) AS Carlos_Customers
+FROM dbo.DIM_Customer;
+
+REVERT;
+GO
+
+EXECUTE AS USER = 'AuditCompliance';
+
+SELECT COUNT(*) AS All_Transactions
+FROM dbo.FACT_Transaction;
+
+SELECT COUNT(*) AS All_Customers
+FROM dbo.DIM_Customer;
+
+REVERT;
+GO
 ```
 
-### 6. Activate RLS and test
-
-Turn both policies ON and verify with `EXECUTE AS`:
+Expected results:
 
 | User | Transactions | Customers |
 |---|---:|---:|
@@ -189,18 +379,83 @@ Turn both policies ON and verify with `EXECUTE AS`:
 | `AuditCompliance` | 63 | 20 |
 | `DWHAdmin` | 63 | 20 |
 
-### 7. Open the Dashboard
-
-Open `dashboards/banking_dashboard.pbix` in Power BI Desktop.
-
-### 8. Test Auditing
-
-After generating activity (e.g., SELECT queries), load the audit logs:
+### 6. Validate DDM
 
 ```sql
-EXEC Security.sp_LoadAuditLog;
-SELECT TOP 20 * FROM Security.AuditLog ORDER BY event_time DESC;
+USE BankingDWH;
+GO
+
+EXECUTE AS USER = 'LauraGomez';
+
+SELECT TOP 5
+    FullName,
+    Cedula,
+    Email,
+    Phone
+FROM dbo.DIM_Customer;
+
+REVERT;
+GO
 ```
+
+The sensitive values should be masked for `LauraGomez`.
+
+### 7. Validate Auditing
+
+```sql
+USE BankingDWH;
+GO
+
+EXECUTE AS USER = 'LauraGomez';
+
+SELECT TOP 5 *
+FROM dbo.FACT_Transaction;
+
+SELECT TOP 5
+    FullName,
+    Cedula,
+    Email,
+    Phone
+FROM dbo.DIM_Customer;
+
+REVERT;
+GO
+
+EXEC Security.sp_LoadAuditLog;
+GO
+
+SELECT TOP 20
+    event_time,
+    server_principal_name,
+    object_name,
+    action_id
+FROM Security.AuditLog
+ORDER BY event_time DESC;
+GO
+```
+
+### 8. Install Python dependencies
+
+```bash
+pip install pandas sqlalchemy pyodbc
+```
+
+### 9. Generate and load data
+
+```bash
+python src/generate_data.py
+python src/etl_pipeline.py
+```
+
+### 10. Open the dashboard
+
+Open:
+
+```text
+dashboards/banking_dashboard.pbix
+```
+
+in Power BI Desktop.
 
 ---
 
@@ -210,13 +465,21 @@ SELECT TOP 20 * FROM Security.AuditLog ORDER BY event_time DESC;
 banking-data-warehouse-etl/
 ├── dashboards/
 │   └── banking_dashboard.pbix
+├── data/
+│   ├── logs/
+│   └── raw/
 ├── docs/
-│   ├── assets/                    # Images for README
+│   ├── assets/
+│   │   ├── dashboard_calidad.png
+│   │   ├── dashboard_clientes.png
+│   │   └── dashboard_tendencia.png
 │   ├── data_dictionary.md
+│   ├── deployment.md
 │   ├── lineage.md
 │   ├── project_charter.md
-│   ├── security_audit.md          # NEW (Day 7)
-│   └── security_ddm.md            # NEW (Day 6)
+│   ├── security_audit.md
+│   ├── security_ddm.md
+│   └── security_rls.md
 ├── sql/
 │   ├── create_tables.sql
 │   └── security/
@@ -230,25 +493,85 @@ banking-data-warehouse-etl/
 │       ├── rls_dim_customer_policy.sql
 │       ├── rls_dim_customer_index.sql
 │       ├── dynamic_data_masking.sql
-│       ├── audit_setup_master.sql        # NEW (Day 7)
-│       ├── audit_setup_database.sql      # NEW (Day 7)
-│       ├── audit_processing.sql           # NEW (Day 7)
-│       ├── test_ddm.sql                   # NEW (Day 6)
+│       ├── audit_setup_master.sql
+│       ├── audit_setup_database.sql
+│       ├── audit_processing.sql
+│       ├── test_ddm.sql
 │       └── rename_spanish_objects_to_english.sql
 ├── src/
 │   ├── generate_data.py
 │   └── etl_pipeline.py
+├── deploy.sql
+├── .env.example
 ├── .gitignore
 └── README.md
 ```
 
 ---
 
+## Troubleshooting
+
+### RLS verification returns 0 rows
+
+This can be expected when the query is executed under a user/context filtered by RLS.
+
+Use:
+
+```sql
+EXECUTE AS USER = 'DWHAdmin';
+```
+
+or:
+
+```sql
+EXECUTE AS USER = 'AuditCompliance';
+```
+
+for unrestricted administrative verification.
+
+### `Msg 33071` when deploying
+
+The existing Server Audit must be disabled before it can be dropped. The current `deploy.sql` handles this with:
+
+```sql
+ALTER SERVER AUDIT BankingDWH_Audit WITH (STATE = OFF);
+```
+
+before `DROP SERVER AUDIT`.
+
+### `Msg 15530` — audit already exists
+
+This usually indicates that the existing audit was not successfully dropped. Verify the `STATE = OFF` step before the `DROP SERVER AUDIT`.
+
+### `Msg 15151` for `DWHAdmin`
+
+`VIEW SERVER STATE` is a server-level permission, while `VIEW DEFINITION` is a database-level permission. They must be granted in their respective contexts.
+
+### Audit file access errors
+
+Verify that:
+
+```text
+C:\SQLAudit\
+```
+
+exists and that the SQL Server service account has write access.
+
+### Login password changes are not applied
+
+The deployment uses `IF NOT EXISTS` when creating server logins. If a login already exists, its existing password is not changed by the deployment. Use `ALTER LOGIN` to change an existing password.
+
+---
+
 ## Performance Metrics (STATISTICS IO)
 
-After implementing RLS on `DIM_Customer`, I measured the performance using SQL Server's `STATISTICS IO`:
+After implementing RLS on `DIM_Customer`, the measured query was:
 
-**Query:** `SELECT * FROM DIM_Customer` as `LauraGomez`
+```text
+SELECT * FROM DIM_Customer
+```
+
+executed as `LauraGomez`.
 
 | Table | Scan Count | Logical Reads | Physical Reads |
 |---|---:|---:|---:|
@@ -258,7 +581,7 @@ After implementing RLS on `DIM_Customer`, I measured the performance using SQL S
 
 **Total Logical Reads: 102**
 
-**Analysis:** With composite indexes on `FACT_Transaction (CustomerKey, BranchKey)` and `Security.UserBranch (UserName, BranchKey)`, the RLS predicate executes efficiently. Each customer evaluation requires only 3 logical reads on average (2 on `FACT_Transaction` + 1 on `UserBranch`), proving that security does not sacrifice performance when properly optimized.
+The results demonstrate that the security predicates remain efficient when the supporting indexes are present.
 
 ---
 
@@ -267,6 +590,8 @@ After implementing RLS on `DIM_Customer`, I measured the performance using SQL S
 - Automate audit log consolidation with SQL Server Agent jobs.
 - Implement column-level encryption for highly sensitive data.
 - Deploy to Azure SQL Database to test cloud-native security features.
+- Expand automated deployment and integration tests.
+- Add further validation around deployment success/failure handling.
 
 ---
 
@@ -284,12 +609,11 @@ Built as part of my preparation for Data Engineering and Analytics roles.
 
 | Section | Change |
 |---|---|
-| Status | Updated to reflect RLS on dimensions + performance optimization |
-| Key Features | Added full section on `DIM_Customer` RLS with subquery logic |
-| Performance Metrics | Added table with STATISTICS IO results (Scan Count, Logical Reads) |
-| Security Implementation Progress | Added Day 4 as completed |
-| How to Run | Added new Day 4 scripts |
-| Project Structure | Added the 4 new Day 4 files |
-| Dynamic Data Masking | Added Day 6 implementation and documentation |
-| Native Auditing | Added Day 7 implementation with server audit, database specification, and log processing |
-| Future Enhancements | Kept unchanged |
+| Status | Updated to reflect the completed security layer and orchestrated deployment |
+| Deployment | Added `deploy.sql` as the recommended deployment entry point |
+| Verification | Documented RLS-aware verification and `DWHAdmin` administrative verification |
+| Troubleshooting | Added Server Audit and `DWHAdmin` deployment issues identified during testing |
+| Structure | Confirmed actual repository paths from the project archive |
+| Documentation | Linked `docs/deployment.md`, `docs/security_rls.md`, `docs/security_ddm.md`, and `docs/security_audit.md` |
+| Execution | Updated Python paths to `src/` and deployment flow to the current repository structure |
+| Progress | Marked deployment integration and verification as complete |
