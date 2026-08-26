@@ -1,8 +1,8 @@
 # Banking Data Warehouse & Security Layer
 
-**Status:** Core DWH Complete | Security Layer: RLS, DDM & Auditing Fully Implemented | Deployment Orchestrated | Performance Optimized
+**Status:** Core DWH Complete | Security Layer: RLS, DDM & Auditing Fully Implemented | Deployment Orchestrated | Automated Testing Suite Added | Performance Optimized
 
-A fully functional Data Warehouse for a simulated banking environment, extended with SQL Server security controls including Row-Level Security on fact and dimension tables, Dynamic Data Masking, native auditing, role-based permissions, and performance optimization.
+A fully functional Data Warehouse for a simulated banking environment, extended with SQL Server security controls including Row-Level Security on fact and dimension tables, Dynamic Data Masking, native auditing, role-based permissions, an automated testing suite, and performance optimization.
 
 ---
 
@@ -12,13 +12,14 @@ This project simulates the integration of two hypothetical banking systems to bu
 
 ### What makes this project unique
 
-Beyond the ETL pipeline and Star Schema model, the project includes a complete SQL Server security layer and an orchestrated deployment script that rebuilds the database and its security controls from scratch.
+Beyond the ETL pipeline and Star Schema model, the project includes a complete SQL Server security layer, an automated testing suite, and an orchestrated deployment script that rebuilds the database and its security controls from scratch.
 
 - **Row-Level Security (RLS) on `FACT_Transaction`:** Analysts are restricted to transactions from their assigned branches. ✅ Implemented & Tested
 - **Row-Level Security (RLS) on `DIM_Customer`:** Analysts only see customers associated with transactions in their assigned branches. ✅ Implemented & Tested
 - **Performance Optimization:** Composite indexes support the RLS predicates and customer-access subquery. ✅ Optimized & Measured
 - **Dynamic Data Masking (DDM):** Masks PII including `Cedula`, `Email`, and `Phone` for non-privileged users. ✅ Implemented & Tested
 - **Native SQL Server Auditing:** Captures `SELECT`, `INSERT`, `UPDATE`, and `DELETE` activity on sensitive tables and supports consolidation into `Security.AuditLog`. ✅ Implemented & Tested
+- **Automated Testing Suite:** Comprehensive test coverage for RLS, DDM, and Auditing using SQL scripts and Python (pytest). ✅ Implemented & Tested
 - **Orchestrated Deployment:** `deploy.sql` creates the database, server principals, users, data, RLS, DDM, permissions, auditing, and post-deployment verification. ✅ Implemented & Tested
 
 ---
@@ -34,6 +35,7 @@ This repository is part of my technical portfolio, demonstrating competencies fo
 - ETL/ELT pipeline development
 - Database security and access control
 - SQL Server performance optimization
+- Automated testing and quality assurance for data systems
 - Business intelligence and reporting
 
 ---
@@ -46,6 +48,7 @@ This repository is part of my technical portfolio, demonstrating competencies fo
 | Database | SQL Server Developer Edition |
 | Modeling | Star Schema |
 | Security | RLS, Dynamic Data Masking, Native Auditing |
+| Testing | SQL (SSMS), Python (pytest, pyodbc) |
 | Deployment | T-SQL orchestrated deployment (`deploy.sql`) |
 | BI / Dashboards | Power BI Desktop |
 | Version Control | Git / GitHub |
@@ -215,7 +218,37 @@ docs/security_audit.md
 
 The deployment also handles an existing `BankingDWH_Audit` by disabling it before dropping and recreating it.
 
-### 7. Orchestrated Deployment
+### 7. Automated Testing Suite
+
+Comprehensive test coverage ensures the security layer functions correctly after every deployment:
+
+- **SQL Tests:** Run directly in SSMS using `EXECUTE AS` to validate RLS row counts, DDM masking patterns, and audit event capture.
+- **Python Tests:** Use `pytest` and `pyodbc` to programmatically verify RLS, DDM, and auditing. Ideal for CI/CD integration.
+- **Test Coverage:**
+  - RLS: 5 user profiles (`LauraGomez`, `CarlosMendez`, `AuditCompliance`, `DWHAdmin`, `ETLService`)
+  - DDM: Masked vs. unmasked column validation
+  - Auditing: SELECT/UPDATE capture, deduplication, and database scope verification
+
+Test files:
+
+```text
+tests/sql/test_rls.sql
+tests/sql/test_ddm.sql
+tests/sql/test_audit.sql
+tests/sql/run_all_tests.sql
+tests/python/test_rls.py
+tests/python/test_ddm.py
+tests/python/test_audit.py
+```
+
+Documentation:
+
+```text
+docs/testing.md
+tests/README.md
+```
+
+### 8. Orchestrated Deployment
 
 The recommended deployment entry point is:
 
@@ -277,6 +310,7 @@ The documented dashboards include:
 | Day 6 | Dynamic Data Masking on `DIM_Customer`. | ✅ Complete |
 | Day 7 | Native SQL Server Auditing and audit log processing. | ✅ Complete |
 | Day 8–10 | Deployment integration, deployment troubleshooting, and final verification. | ✅ Complete |
+| **Day 9** | **Automated test suite (SQL + Python/pytest) added for RLS, DDM, and auditing. Created `tests/README.md` and `docs/testing.md`.** | **✅ Complete** |
 | Day 11–15 | Additional enhancements and final reflection. | ⏳ Planned |
 
 ---
@@ -434,20 +468,41 @@ ORDER BY event_time DESC;
 GO
 ```
 
-### 8. Install Python dependencies
+### 8. Run Automated Tests
+
+**SQL Tests (in SSMS)**
+
+```sql
+-- Run all tests
+:r tests/sql/run_all_tests.sql
+```
+
+Or execute individually: `test_rls.sql`, `test_ddm.sql`, `test_audit.sql`.
+
+**Python Tests (pytest)**
+
+```bash
+cd tests/python
+pip install -r requirements.txt
+pytest -v
+```
+
+For detailed instructions, see `tests/README.md`.
+
+### 9. Install Python dependencies
 
 ```bash
 pip install pandas sqlalchemy pyodbc
 ```
 
-### 9. Generate and load data
+### 10. Generate and load data
 
 ```bash
 python src/generate_data.py
 python src/etl_pipeline.py
 ```
 
-### 10. Open the dashboard
+### 11. Open the dashboard
 
 Open:
 
@@ -479,7 +534,8 @@ banking-data-warehouse-etl/
 │   ├── project_charter.md
 │   ├── security_audit.md
 │   ├── security_ddm.md
-│   └── security_rls.md
+│   ├── security_rls.md
+│   └── testing.md
 ├── sql/
 │   ├── create_tables.sql
 │   └── security/
@@ -501,6 +557,19 @@ banking-data-warehouse-etl/
 ├── src/
 │   ├── generate_data.py
 │   └── etl_pipeline.py
+├── tests/
+│   ├── sql/
+│   │   ├── test_rls.sql
+│   │   ├── test_ddm.sql
+│   │   ├── test_audit.sql
+│   │   └── run_all_tests.sql
+│   ├── python/
+│   │   ├── conftest.py
+│   │   ├── test_rls.py
+│   │   ├── test_ddm.py
+│   │   ├── test_audit.py
+│   │   └── requirements.txt
+│   └── README.md
 ├── deploy.sql
 ├── .env.example
 ├── .gitignore
@@ -561,6 +630,22 @@ exists and that the SQL Server service account has write access.
 
 The deployment uses `IF NOT EXISTS` when creating server logins. If a login already exists, its existing password is not changed by the deployment. Use `ALTER LOGIN` to change an existing password.
 
+### `Login failed for user` (Python tests)
+
+Ensure the logins exist in SQL Server and the passwords are correct. For Windows Authentication, use `Trusted_Connection=yes`.
+
+### No audit events found (Python/SQL tests)
+
+Verify the Server Audit is enabled (`ALTER SERVER AUDIT BankingDWH_Audit WITH (STATE = ON);`) and that `C:\SQLAudit\` exists and is writable.
+
+### RLS counts mismatch (tests)
+
+Check that `Security.UserBranch` is correctly populated and that the RLS policies are `ON`.
+
+### DDM does not mask (tests)
+
+Confirm that `UNMASK` was granted only to the correct users and that restricted users do not have `UNMASK`.
+
 ---
 
 ## Performance Metrics (STATISTICS IO)
@@ -592,6 +677,7 @@ The results demonstrate that the security predicates remain efficient when the s
 - Deploy to Azure SQL Database to test cloud-native security features.
 - Expand automated deployment and integration tests.
 - Add further validation around deployment success/failure handling.
+- Add a GitHub Actions CI/CD pipeline to run the automated test suite on every push.
 
 ---
 
@@ -599,7 +685,7 @@ The results demonstrate that the security predicates remain efficient when the s
 
 **Alejandro Velazquez**
 
-[LinkedIn](#) · [GitHub](https://github.com/alejandrov07)
+[LinkedIn](https://www.linkedin.com/in/alejandro-velazquez-9b0375387/) · [GitHub](https://github.com/alejandrov07)
 
 Built as part of my preparation for Data Engineering and Analytics roles.
 
@@ -609,11 +695,16 @@ Built as part of my preparation for Data Engineering and Analytics roles.
 
 | Section | Change |
 |---|---|
-| Status | Updated to reflect the completed security layer and orchestrated deployment |
+| Status | Updated to reflect the completed security layer, automated testing suite, and orchestrated deployment |
 | Deployment | Added `deploy.sql` as the recommended deployment entry point |
 | Verification | Documented RLS-aware verification and `DWHAdmin` administrative verification |
-| Troubleshooting | Added Server Audit and `DWHAdmin` deployment issues identified during testing |
-| Structure | Confirmed actual repository paths from the project archive |
-| Documentation | Linked `docs/deployment.md`, `docs/security_rls.md`, `docs/security_ddm.md`, and `docs/security_audit.md` |
+| Key Features | Restored and integrated the "Automated Testing Suite" section (SQL + Python/pytest) |
+| Tech Stack | Restored the "Testing" row |
+| Security Implementation Progress | Restored Day 9 (automated testing suite) as completed |
+| How to Run | Restored the "Run Automated Tests" step alongside deployment and validation steps |
+| Project Structure | Restored the `tests/` folder and `docs/testing.md` |
+| Troubleshooting | Added Server Audit and `DWHAdmin` deployment issues, plus restored test-related troubleshooting entries |
+| Future Enhancements | Restored the CI/CD (GitHub Actions) note |
+| Documentation | Linked `docs/deployment.md`, `docs/security_rls.md`, `docs/security_ddm.md`, `docs/security_audit.md`, and `docs/testing.md` |
 | Execution | Updated Python paths to `src/` and deployment flow to the current repository structure |
-| Progress | Marked deployment integration and verification as complete |
+| Progress | Marked deployment integration, verification, and testing suite as complete |
