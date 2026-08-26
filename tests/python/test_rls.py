@@ -9,24 +9,28 @@ EXPECTED = {
 }
 
 @pytest.mark.parametrize('username,expected', EXPECTED.items())
-def test_rls_counts(conn_as_user, username, expected):
-    """Test that each user sees the correct row counts."""
-    # Skip if we don't have passwords for all users – for local testing we use Trusted Connection
-    # For a real test, you would need to pass passwords or use EXECUTE AS.
-    # This version uses the connection as DWHAdmin and impersonates with EXECUTE AS.
-    # Alternatively, you can use a separate connection string per user.
-    conn = conn_as_user(username, 'password')  # Replace with actual password logic
-    cursor = conn.cursor()
+def test_rls_counts(dwh_admin_conn, username, expected):
+    """
+    Test RLS counts by impersonating each user with EXECUTE AS.
+    """
+    cursor = dwh_admin_conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM dbo.FACT_Transaction")
+    # Impersonate user
+    cursor.execute(f"EXECUTE AS USER = '{username}';")
+
+    # Get transaction count
+    cursor.execute("SELECT COUNT(*) FROM dbo.FACT_Transaction;")
     trans_count = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM dbo.DIM_Customer")
+    # Get customer count
+    cursor.execute("SELECT COUNT(*) FROM dbo.DIM_Customer;")
     cust_count = cursor.fetchone()[0]
+
+    # Revert to original user
+    cursor.execute("REVERT;")
+    dwh_admin_conn.commit()
 
     assert trans_count == expected['transactions'], \
         f"{username} saw {trans_count} transactions, expected {expected['transactions']}"
     assert cust_count == expected['customers'], \
         f"{username} saw {cust_count} customers, expected {expected['customers']}"
-
-    conn.close()
