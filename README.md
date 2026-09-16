@@ -519,15 +519,8 @@ in Power BI Desktop.
 ```text
 banking-data-warehouse-etl/
 ├── dashboards/
-│   └── banking_dashboard.pbix
-├── data/
-│   ├── logs/
-│   └── raw/
+│   └── BankingDWH Dashboard.pbix
 ├── docs/
-│   ├── assets/
-│   │   ├── dashboard_calidad.png
-│   │   ├── dashboard_clientes.png
-│   │   └── dashboard_tendencia.png
 │   ├── data_dictionary.md
 │   ├── deployment.md
 │   ├── lineage.md
@@ -536,39 +529,44 @@ banking-data-warehouse-etl/
 │   ├── security_ddm.md
 │   ├── security_rls.md
 │   └── testing.md
+├── images/
+│   ├── audit_log.png
+│   ├── dashboard_ddm_masked.png
+│   ├── dashboard_full.png
+│   ├── dashboard_rls_laura.png
+│   ├── data_model.png
+│   └── rls_comparison.png
 ├── sql/
 │   ├── create_tables.sql
 │   └── security/
-│       ├── setup_principals.sql
-│       ├── user_branch_mapping.sql
-│       ├── grant_base_permissions.sql
-│       ├── rls_predicate_function.sql
-│       ├── rls_policy.sql
-│       ├── rls_index_optimization.sql
-│       ├── rls_dim_customer_function.sql
-│       ├── rls_dim_customer_policy.sql
-│       ├── rls_dim_customer_index.sql
-│       ├── dynamic_data_masking.sql
-│       ├── audit_setup_master.sql
-│       ├── audit_setup_database.sql
 │       ├── audit_processing.sql
+│       ├── audit_setup_database.sql
+│       ├── audit_setup_master.sql
+│       ├── dynamic_data_masking.sql
+│       ├── grant_base_permissions.sql
+│       ├── rls_dim_customer_function.sql
+│       ├── rls_dim_customer_index.sql
+│       ├── rls_dim_customer_policy.sql
+│       ├── rls_index_optimization.sql
+│       ├── rls_policy.sql
+│       ├── rls_predicate_function.sql
+│       ├── setup_principals.sql
 │       ├── test_ddm.sql
-│       └── rename_spanish_objects_to_english.sql
+│       └── user_branch_mapping.sql
 ├── src/
-│   ├── generate_data.py
-│   └── etl_pipeline.py
+│   ├── etl_pipeline.py
+│   └── generate_data.py
 ├── tests/
-│   ├── sql/
-│   │   ├── test_rls.sql
-│   │   ├── test_ddm.sql
-│   │   ├── test_audit.sql
-│   │   └── run_all_tests.sql
 │   ├── python/
 │   │   ├── conftest.py
-│   │   ├── test_rls.py
-│   │   ├── test_ddm.py
+│   │   ├── requirements.txt
 │   │   ├── test_audit.py
-│   │   └── requirements.txt
+│   │   ├── test_ddm.py
+│   │   └── test_rls.py
+│   ├── sql/
+│   │   ├── test_audit.sql
+│   │   ├── test_ddm.sql
+│   │   └── test_rls.sql
 │   └── README.md
 ├── deploy.sql
 ├── .env.example
