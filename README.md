@@ -280,21 +280,45 @@ docs/deployment.md
 
 ---
 
-## Power BI Dashboards
+## Power BI Dashboard
 
-The project includes a Power BI dashboard:
+An interactive Power BI dashboard connected to `BankingDWH` via **DirectQuery**, leveraging SQL Server's native RLS and DDM for real-time security enforcement.
 
-```text
-dashboards/banking_dashboard.pbix
-```
+### Dashboard Components
 
-The documented dashboards include:
+| Component | Description |
+|-----------|-------------|
+| **5 KPI Cards** | Total Transactions (63), Total Amount ($173,397.68), Avg Transaction ($2,752.34), Distinct Customers (20), Total Branches (5) |
+| **Monthly Transaction Trend** | Area chart showing transaction volume by month |
+| **Total Amount by Product** | Bar chart with 10 products ranked by revenue |
+| **Transactions by Branch** | Bar chart with 5 branches |
+| **Transactions by Type** | Bar chart with transaction types |
+| **Transaction Details** | 63-row table with masked customer data |
+| **Slicers** | Branch, Product, and Month filters |
 
-- Monthly transaction trends
-- Top clients by transaction volume
-- Data quality metrics
+### Security Integration
 
-![Dashboard Tendencia](docs/assets/dashboard_tendencia.png)
+The dashboard respects SQL Server's security layer:
+
+- **RLS**: Users see only their assigned branch transactions
+- **DDM**: Sensitive fields (`Cedula`, `Email`, `Phone`) are masked for non-privileged users
+
+### Screenshots
+
+#### Full Dashboard (ETLService)
+![Full Dashboard](images/dashboard_full.png)
+
+#### RLS in Action — LauraGomez (31 transactions)
+![RLS Dashboard](images/dashboard_rls_laura.png)
+
+#### DDM in Action — Masked Customer Data
+![DDM Masked](images/dashboard_ddm_masked.png)
+
+#### Data Model (Star Schema)
+![Data Model](images/data_model.png)
+
+#### RLS Comparison (ETLService vs LauraGomez)
+![RLS Comparison](images/rls_comparison.png)
 
 ---
 
@@ -311,7 +335,7 @@ The documented dashboards include:
 | Day 7 | Native SQL Server Auditing and audit log processing. | ✅ Complete |
 | Day 8–10 | Deployment integration, deployment troubleshooting, and final verification. | ✅ Complete |
 | **Day 9** | **Automated test suite (SQL + Python/pytest) added for RLS, DDM, and auditing. Created `tests/README.md` and `docs/testing.md`.** | **✅ Complete** |
-| Day 11–15 | Additional enhancements and final reflection. | ⏳ Planned |
+| **Day 10** | **Power BI dashboard built with RLS + DDM integration. Verified security works end-to-end.** | **✅ Complete** |
 
 ---
 
@@ -507,7 +531,7 @@ python src/etl_pipeline.py
 Open:
 
 ```text
-dashboards/banking_dashboard.pbix
+dashboards/BankingDWH Dashboard.pbix
 ```
 
 in Power BI Desktop.
@@ -693,16 +717,20 @@ Built as part of my preparation for Data Engineering and Analytics roles.
 
 | Section | Change |
 |---|---|
-| Status | Updated to reflect the completed security layer, automated testing suite, and orchestrated deployment |
+| Status | Updated to reflect the completed security layer, automated testing suite, orchestrated deployment, and Power BI dashboard |
 | Deployment | Added `deploy.sql` as the recommended deployment entry point |
 | Verification | Documented RLS-aware verification and `DWHAdmin` administrative verification |
 | Key Features | Restored and integrated the "Automated Testing Suite" section (SQL + Python/pytest) |
 | Tech Stack | Restored the "Testing" row |
-| Security Implementation Progress | Restored Day 9 (automated testing suite) as completed |
-| How to Run | Restored the "Run Automated Tests" step alongside deployment and validation steps |
-| Project Structure | Restored the `tests/` folder and `docs/testing.md` |
+| Security Implementation Progress | Restored Day 9 (automated testing suite) as completed and added Day 10 (Power BI dashboard) as completed |
+| Power BI Dashboard | Expanded with full dashboard description: 5 KPI cards, 4 charts (monthly trend, product, branch, type), detail table, and slicers |
+| Power BI Security | Documented RLS + DDM integration via DirectQuery, including screenshots for full access, RLS-restricted, and DDM-masked views |
+| How to Run | Restored the "Run Automated Tests" step alongside deployment and validation steps; updated dashboard path to `dashboards/BankingDWH Dashboard.pbix` |
+| Project Structure | Restored the `tests/` folder and `docs/testing.md`; kept dashboard assets in `dashboards/` and screenshots in `images/` |
 | Troubleshooting | Added Server Audit and `DWHAdmin` deployment issues, plus restored test-related troubleshooting entries |
 | Future Enhancements | Restored the CI/CD (GitHub Actions) note |
 | Documentation | Linked `docs/deployment.md`, `docs/security_rls.md`, `docs/security_ddm.md`, `docs/security_audit.md`, and `docs/testing.md` |
 | Execution | Updated Python paths to `src/` and deployment flow to the current repository structure |
-| Progress | Marked deployment integration, verification, and testing suite as complete |
+| Progress | Marked deployment integration, verification, automated testing suite, and Power BI dashboard as complete |
+| Screenshots | Added references to `images/dashboard_full.png`, `images/dashboard_rls_laura.png`, `images/dashboard_ddm_masked.png`, `images/data_model.png`, and `images/rls_comparison.png` |
+
