@@ -27,7 +27,7 @@ RETURN
 (
     SELECT 1 AS can_see
     WHERE 
-        -- Exceptions: Auditor and Admin see everything
+        -- Exceptions: Auditor, Admin and ETLService see everything
         @userName IN ('AuditCompliance', 'DWHAdmin', 'ETLService')
         OR
         -- For analysts: check the mapping table
