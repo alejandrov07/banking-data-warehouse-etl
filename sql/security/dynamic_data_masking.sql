@@ -4,9 +4,9 @@ GO
 -- DYNAMIC DATA MASKING (DDM) ON DIM_Customer
 -- Purpose: Protect sensitive personally identifiable information (PII) in the customer dimension by masking the Cedula, Email, and Phone columns. Only designated users (AuditCompliance, DWHAdmin, and ETLService) can see the original values via the UNMASK permission.
 
--- Apply masking to Cedula: show first 4 digits, mask the middle, display no suffix.
+-- Apply masking to Cedula: show first 3 digits, mask the middle, display no suffix.
 ALTER TABLE DIM_Customer
-ALTER COLUMN Cedula ADD MASKED WITH (FUNCTION = 'partial(4, "XXXX-", 0)');
+ALTER COLUMN Cedula ADD MASKED WITH (FUNCTION = 'partial(3, "-XXXXXXX-X", 0)');
 GO
 
 -- Apply masking to Email: use the built-in email mask.
@@ -16,7 +16,7 @@ GO
 
 -- Apply masking to Phone: show the last 4 digits, mask the rest.
 ALTER TABLE DIM_Customer
-ALTER COLUMN Phone ADD MASKED WITH (FUNCTION = 'partial(0, "XXXX-XXXX-", 4)');
+ALTER COLUMN Phone ADD MASKED WITH (FUNCTION = 'partial(0, "XXX-XXX-", 4)');
 GO
 
 -- GRANT UNMASK PERMISSIONS
