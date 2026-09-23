@@ -579,7 +579,8 @@ banking-data-warehouse-etl/
 │       └── user_branch_mapping.sql
 ├── src/
 │   ├── etl_pipeline.py
-│   └── generate_data.py
+│   ├── generate_data.py
+│   └── validate_quality.py
 ├── tests/
 │   ├── python/
 │   │   ├── conftest.py
